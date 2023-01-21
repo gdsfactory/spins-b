@@ -115,8 +115,7 @@ def normalized_fields(v: np.ndarray,
     S = 0.5 * (
         (S1 + np.roll(S1, 1, axis=0)) - (S2 + np.roll(S2, 1, axis=1)))
     P = 0.5 * np.real(S.sum())
-    assert P > 0, 'Found a mode propagating in the wrong direction! P={}'.format(
-        P)
+    assert P > 0, f'Found a mode propagating in the wrong direction! P={P}'
 
     norm_amplitude = 1 / np.sqrt(P)
     norm_angle = -np.angle(e[e.size // 2])
@@ -210,8 +209,7 @@ def h2e(wavenumber: complex, omega: complex, dxes: dx_lists_t,
     :param epsilon: Vectorized dielectric constant grid
     :return: Sparse matrix representation of the operator
     """
-    op = sparse.diags(1 / (1j * omega * epsilon)) @ curl_h(wavenumber, dxes)
-    return op
+    return sparse.diags(1 / (1j * omega * epsilon)) @ curl_h(wavenumber, dxes)
 
 
 def curl_e(wavenumber: complex, dxes: dx_lists_t) -> sparse.spmatrix:

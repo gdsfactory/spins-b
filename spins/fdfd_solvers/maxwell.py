@@ -69,11 +69,9 @@ def write_field(filename_prefix: str, field):
     """
     xyz = 'xyz'
     for k in range(3):
-        file_prefix = filename_prefix + '_' + xyz[k]
-        write_to_hd5(file_prefix + 'r', 'data',
-                     np.real(field[k]).astype(np.float64))
-        write_to_hd5(file_prefix + 'i', 'data',
-                     np.imag(field[k]).astype(np.float64))
+        file_prefix = f'{filename_prefix}_{xyz[k]}'
+        write_to_hd5(f'{file_prefix}r', 'data', np.real(field[k]).astype(np.float64))
+        write_to_hd5(f'{file_prefix}i', 'data', np.imag(field[k]).astype(np.float64))
 
 
 class MaxwellSolver:
@@ -98,7 +96,7 @@ class MaxwellSolver:
         """
         # If there is no port specified for server, append the default.
         if ':' not in server:
-            server += ':' + str(MaxwellSolver.DEFAULT_MAXWELL_SERVER_PORT)
+            server += f':{str(MaxwellSolver.DEFAULT_MAXWELL_SERVER_PORT)}'
         self.shape = shape
         self.server = server
         self.err_thresh = err_thresh

@@ -35,9 +35,9 @@ class TestGradientCalculation(unittest.TestCase):
         # Create a 3x3 2D grid to brute force check adjoint gradients.
         shape = [3, 3, 1]
         # Setup epsilon (pure vacuum).
-        epsilon = [np.ones(shape) for i in range(3)]
+        epsilon = [np.ones(shape) for _ in range(3)]
         # Setup dxes. Assume dx = 40.
-        dxes = [[np.ones(shape[i]) * 40 for i in range(3)] for j in range(2)]
+        dxes = [[np.ones(shape[i]) * 40 for i in range(3)] for _ in range(2)]
         # Setup a point source in the center.
         J = [np.zeros(shape) for i in range(3)]
         J[2][1, 1, 0] = 1

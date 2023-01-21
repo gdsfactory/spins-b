@@ -51,10 +51,7 @@ class Workspace:
         # the graph.
         self._nodes = {}
         # List of all the objects that have been instantiated.
-        self._objects = {}
-
-        # TODO(logansu): Accept argument-less variable.
-        self._objects[VARIABLE_NODE] = problem.Variable(1)
+        self._objects = {VARIABLE_NODE: problem.Variable(1)}
 
         if isinstance(nodes, collections.Iterable):
             for node in nodes:
@@ -92,7 +89,7 @@ class Workspace:
             add_node(child)
 
         if add_node(node):
-            visited = set(id(node_) for node_ in self._nodes)
+            visited = {id(node_) for node_ in self._nodes}
             # TODO(logansu): Deal with this private import.
             from spins.invdes.problem_graph.optplan.io import _iter_optplan_fields
             _iter_optplan_fields(node, visited, process_field)
@@ -120,8 +117,9 @@ class Workspace:
         creator = optplan.GLOBAL_CONTEXT_STACK.get_node_creator(
             optplan.NodeMetaType.TRANSFORMATION, node.transformation.type)
         if creator is None:
-            raise ValueError("Unable to find creator for transformation with "
-                             "type {}".format(node.type))
+            raise ValueError(
+                f"Unable to find creator for transformation with type {node.type}"
+            )
 
         if self._logger:
             self._logger.set_transformation_name(node.name)
@@ -174,12 +172,9 @@ class Workspace:
             node = name_or_node
         else:
             raise ValueError(
-                "`name_or_node` must be string or `ProblemGraphNode`"
-                ", got {}".format(type(name_or_node)))
+                f"`name_or_node` must be string or `ProblemGraphNode`, got {type(name_or_node)}"
+            )
 
-        # Return the cached object. Note that we do this before `_add_node`
-        # just in case someone decided to modify `node` after adding it to
-        # the workspace.
         if node.name in self._objects:
             if return_graph_node:
                 return self._objects[node.name], self._nodes[node.name]
@@ -192,11 +187,7 @@ class Workspace:
         # Create the actual object.
         creator = optplan.GLOBAL_CONTEXT_STACK.get_node_creator(
             optplan.NodeMetaType.OPTPLAN_NODE, node.type)
-        if creator is None:
-            self._objects[node.name] = node
-        else:
-            self._objects[node.name] = creator(node, self)
-
+        self._objects[node.name] = node if creator is None else creator(node, self)
         if return_graph_node:
             return self._objects[node.name], self._nodes[node.name]
         else:
@@ -218,12 +209,11 @@ class Workspace:
             corresponding to the objects. If `return_graph_node` is `True`,
             returns `Dict[str, Tuple[object, optplan.ProblemGraphNode]]`.
         """
-        objects = {}
-        for node_name, node in self._nodes.items():
-            if isinstance(node, model_type):
-                objects[node.name] = self.get_object(node, return_graph_node)
-
-        return objects
+        return {
+            node.name: self.get_object(node, return_graph_node)
+            for node_name, node in self._nodes.items()
+            if isinstance(node, model_type)
+        }
 
 
 def _set_parameters(work: workspace.Workspace,
@@ -298,25 +288,22 @@ class Logger:
         Args:
             filename: Name of the checkpoint file.
         """
-        # Get workspace parameters.
-        parameter_data = {}
         parameter_list = self._work.get_objects_by_type(optplan.Parameter)
-        for param_name, param_obj in parameter_list.items():
-            parameter_data[param_name] = param_obj.value
-
-        # Get parametrizations.
-        parametrization_data = {}
+        parameter_data = {
+            param_name: param_obj.value
+            for param_name, param_obj in parameter_list.items()
+        }
         param_list = self._work.get_objects_by_type(optplan.Parametrization)
-        for name, obj in param_list.items():
-            parametrization_data[name] = obj.serialize()
-
+        parametrization_data = {
+            name: obj.serialize() for name, obj in param_list.items()
+        }
         data = {
             "time": str(datetime.now()),
             "parameters": parameter_data,
             "parametrizations": parametrization_data,
         }
 
-        checkpoint_file = filename + ".chkpt.pkl"
+        checkpoint_file = f"{filename}.chkpt.pkl"
         self._logger.info("Saving checkpoint file: %s", checkpoint_file)
 
         # Save the data.
@@ -346,13 +333,11 @@ class Logger:
             for mon, mon_val in zip(monitor_list, mon_vals):
                 monitor_data[mon.name] = mon_val
 
-        # Get workspace parameters.
-        parameter_data = {}
         parameter_list = self._work.get_objects_by_type(optplan.Parameter)
-        for param_name, param_obj in parameter_list.items():
-            parameter_data[param_name] = param_obj.calculate_objective_function(
-                param)
-
+        parameter_data = {
+            param_name: param_obj.calculate_objective_function(param)
+            for param_name, param_obj in parameter_list.items()
+        }
         # Make a log entry.
         data = {
             "transformation": self._transform_name,
@@ -370,7 +355,8 @@ class Logger:
 
         # Save the data.
         file_path = os.path.join(
-            self._path, os.path.join("step{}.pkl".format(self._log_counter)))
+            self._path, os.path.join(f"step{self._log_counter}.pkl")
+        )
         with open(file_path, "wb") as handle:
             pickle.dump(data, handle)
 
@@ -393,9 +379,8 @@ def get_latest_log_step(folder: str) -> int:
     # Keep track of the file with the largest step.
     max_step = 0
     for name in filenames:
-        match = re.search(r"step(?P<step>\d+)\.pkl$", name)
-        if match:
-            max_step = max(max_step, int(match.group("step")))
+        if match := re.search(r"step(?P<step>\d+)\.pkl$", name):
+            max_step = max(max_step, int(match["step"]))
     return max_step
 
 
@@ -412,6 +397,4 @@ def get_latest_log_file(folder: str) -> Optional[str]:
         Filename of the last log step if it exists. Else `None`.
     """
     max_step = get_latest_log_step(folder)
-    if max_step == 0:
-        return None
-    return os.path.join(folder, "step{}.pkl".format(max_step))
+    return None if max_step == 0 else os.path.join(folder, f"step{max_step}.pkl")

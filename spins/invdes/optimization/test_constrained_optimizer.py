@@ -39,25 +39,25 @@ if __name__ == '__main__':
     # prob1
     opt, param, ans = problems.build_constrained_ellipsoidal_problem()
     out_param = optimizer(opt, param)
-    print(str(ans) + '    ' + str(out_param.get_structure()))
+    print(f'{str(ans)}    {str(out_param.get_structure())}')
     # prob2
     opt, param, ans = problems.build_constrained_linear_problem(0)
     out_param = optimizer(opt, param)
-    print(str(ans) + '    ' + str(out_param.get_structure()))
+    print(f'{str(ans)}    {str(out_param.get_structure())}')
     # prob3
     opt, param, ans = problems.build_constrained_linear_problem(1)
     out_param = optimizer(opt, param)
-    print(str(ans) + '    ' + str(out_param.get_structure()))
+    print(f'{str(ans)}    {str(out_param.get_structure())}')
     # prob4
     opt, param, ans = problems.build_constrained_quadratic_problem(0)
     out_param = optimizer(opt, param)
-    print(str(ans) + '    ' + str(out_param.get_structure()))
+    print(f'{str(ans)}    {str(out_param.get_structure())}')
     # prob5
     opt, param, ans = problems.build_constrained_quadratic_problem(1)
     out_param = optimizer(opt, param)
-    print(str(ans) + '    ' + str(out_param.get_structure()))
+    print(f'{str(ans)}    {str(out_param.get_structure())}')
     # prob6
     opt, param, ans = problems.build_constrained_quadratic_problem(2)
     out_param = optimizer(opt, param)
-    print(str(ans) + '    ' + str(out_param.get_structure()))
+    print(f'{str(ans)}    {str(out_param.get_structure())}')
     print(time.time() - start)

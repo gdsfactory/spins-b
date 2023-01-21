@@ -88,7 +88,7 @@ def generic(
     """
 
     if matrix_solver_opts is None:
-        matrix_solver_opts = dict()
+        matrix_solver_opts = {}
 
     b0 = -1j * omega * J
     A0 = operators.e_full(omega, dxes, epsilon=epsilon, mu=mu, pec=pec, pmc=pmc)
@@ -104,9 +104,4 @@ def generic(
 
     x = matrix_solver(A.tocsr(), b, **matrix_solver_opts)
 
-    if adjoint:
-        x0 = Pl.H @ x
-    else:
-        x0 = Pr @ x
-
-    return x0
+    return Pl.H @ x if adjoint else Pr @ x

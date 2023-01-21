@@ -50,11 +50,14 @@ class TestMakeNonUniformGrid(unittest.TestCase):
 def make_dxes():
     dx = 2
     shape = [3, 3, 3]
-    return [[
-        np.array([dx] * shape[0]),
-        np.array([dx] * shape[1]),
-        np.array([dx] * shape[2]),
-    ] for i in range(2)]
+    return [
+        [
+            np.array([dx] * shape[0]),
+            np.array([dx] * shape[1]),
+            np.array([dx] * shape[2]),
+        ]
+        for _ in range(2)
+    ]
 
 
 def test_apply_scpml_no_pmls():

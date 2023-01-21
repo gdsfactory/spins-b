@@ -87,10 +87,7 @@ def e_full(omega: complex,
         curls = ch([m * y for m, y in zip(mu, ce(e))])
         return [c - omega**2 * p * x for c, p, x in zip(curls, epsilon, e)]
 
-    if np.any(np.equal(mu, None)):
-        return op_1
-    else:
-        return op_mu
+    return op_1 if np.any(np.equal(mu, None)) else op_mu
 
 
 def eh_full(omega: complex,
@@ -117,10 +114,7 @@ def eh_full(omega: complex,
         return ([c - 1j * omega * p * x for c, p, x in zip(ch(h), epsilon, e)],
                 [c + 1j * omega * m * y for c, m, y in zip(ce(e), mu, h)])
 
-    if np.any(np.equal(mu, None)):
-        return op_1
-    else:
-        return op_mu
+    return op_1 if np.any(np.equal(mu, None)) else op_mu
 
 
 def e2h(
@@ -145,7 +139,4 @@ def e2h(
     def e2h_mu(e):
         return [y / (-1j * omega * m) for y, m in zip(A2(e), mu)]
 
-    if np.any(np.equal(mu, None)):
-        return e2h_1_1
-    else:
-        return e2h_mu
+    return e2h_1_1 if np.any(np.equal(mu, None)) else e2h_mu

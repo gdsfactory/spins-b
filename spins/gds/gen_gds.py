@@ -40,10 +40,9 @@ def gen_gds(poly_coords: List[np.ndarray],
 
     if deembed:
 
-        containment_mx = []
-        for polygon in gds_polygons:
-            containment_mx.append(gdspy.inside(test_points, [polygon]))
-
+        containment_mx = [
+            gdspy.inside(test_points, [polygon]) for polygon in gds_polygons
+        ]
         # Subtract by identity matrix since polygon_i trivially contains
         # polygon_i.
         containment_mx = np.array(containment_mx) - np.eye(len(gds_polygons))
@@ -73,9 +72,7 @@ def gen_gds(poly_coords: List[np.ndarray],
                 for i in target_polys[::-1]:
                     containment_list = np.nonzero(containment_mx[i, :])[0]
                     # Concatenate all the contained polygons to subtract out.
-                    poly_list = sum([
-                        gds_polygons[j].polygons for j in containment_list
-                    ], [])
+                    poly_list = sum((gds_polygons[j].polygons for j in containment_list), [])
                     # Note that we had to turn precision from the default 1e-3
                     # to 1e-6 to avoid errors in the NOT operation.
                     gds_polygons[i] = gdspy.boolean(gds_polygons[i],
@@ -92,10 +89,10 @@ def gen_gds(poly_coords: List[np.ndarray],
                         del gds_polygons[k]
                         del test_points[k]
 
-                containment_mx = []
-                for polygon in gds_polygons:
-                    containment_mx.append(gdspy.inside(test_points, [polygon]))
-
+                containment_mx = [
+                    gdspy.inside(test_points, [polygon])
+                    for polygon in gds_polygons
+                ]
                 containment_mx = np.array(containment_mx) - np.eye(
                     len(gds_polygons))
                 overlap_list = np.sum(containment_mx, axis=1)

@@ -67,7 +67,7 @@ def test_optplan_context_register_node_same_name_throws_error():
 def test_optplan_context_get_nonexistent_node():
     ctx = optplan.OptplanContext()
 
-    assert ctx.get_node_model("testmeta", "dummy") == None
+    assert ctx.get_node_model("testmeta", "dummy") is None
 
 
 def test_optplan_context_get_node_model_dict():
@@ -97,8 +97,8 @@ def test_optplan_context_stack_get_node_model():
 
     assert ctx_stack.get_node_model("testmeta", "dummy") == DummyModel
     assert ctx_stack.get_node_creator("testmeta", "dummy") == dummy_creator
-    assert ctx_stack.get_node_model("testmeta", "dummy2") == None
-    assert ctx_stack.get_node_creator("testmeta", "dummy2") == None
+    assert ctx_stack.get_node_model("testmeta", "dummy2") is None
+    assert ctx_stack.get_node_creator("testmeta", "dummy2") is None
 
 
 def test_optplan_context_stack_get_node_model_multiple():
@@ -114,11 +114,11 @@ def test_optplan_context_stack_get_node_model_multiple():
 
     assert ctx_stack.get_node_model("testmeta", "dummy") == DummyModel
     assert ctx_stack.get_node_model("testmeta", "dummy2") == DummyModel2
-    assert ctx_stack.get_node_model("testmeta", "dummy3") == None
+    assert ctx_stack.get_node_model("testmeta", "dummy3") is None
 
     assert ctx_stack.get_node_creator("testmeta", "dummy") == dummy_creator
     assert ctx_stack.get_node_creator("testmeta", "dummy2") == dummy_creator2
-    assert ctx_stack.get_node_creator("testmeta", "dummy3") == None
+    assert ctx_stack.get_node_creator("testmeta", "dummy3") is None
 
 
 def test_optplan_context_stack_get_node_model_overwriting():
@@ -141,7 +141,7 @@ def test_optplan_context_stack_push_and_pop():
     ctx2 = optplan.OptplanContext()
     ctx_stack = optplan.OptplanContextStack()
 
-    assert ctx_stack.peek() == None
+    assert ctx_stack.peek() is None
 
     ctx_stack.push(ctx)
     assert ctx_stack.peek() == ctx
@@ -154,5 +154,5 @@ def test_optplan_context_stack_push_and_pop():
     assert ctx_stack.peek() == ctx
     assert ctx_stack.pop() == ctx
 
-    assert ctx_stack.peek() == None
-    assert ctx_stack.pop() == None
+    assert ctx_stack.peek() is None
+    assert ctx_stack.pop() is None

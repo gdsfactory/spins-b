@@ -204,7 +204,7 @@ def make_objective(eps: goos.Shape, stage: str, params: Options):
                     2000 + pml_thick * 2)
 
     sim = maxwell.fdfd_simulation(
-        name="sim_{}".format(stage),
+        name=f"sim_{stage}",
         wavelength=params.wlen,
         eps=eps,
         solver=solver,
@@ -212,8 +212,9 @@ def make_objective(eps: goos.Shape, stage: str, params: Options):
             maxwell.GaussianSource(
                 w0=params.beam_width / 2,
                 center=[
-                    params.coupler_len / 2, 0,
-                    params.wg_thickness / 2 + params.beam_dist
+                    params.coupler_len / 2,
+                    0,
+                    params.wg_thickness / 2 + params.beam_dist,
                 ],
                 extents=[params.beam_extents, 0, 0],
                 normal=[0, 0, -1],
@@ -221,7 +222,8 @@ def make_objective(eps: goos.Shape, stage: str, params: Options):
                 theta=np.deg2rad(params.source_angle_deg),
                 psi=np.pi / 2,
                 polarization_angle=0,
-                normalize_by_sim=True)
+                normalize_by_sim=True,
+            )
         ],
         simulation_space=maxwell.SimulationSpace(
             mesh=maxwell.UniformMesh(dx=params.dx),
@@ -229,22 +231,25 @@ def make_objective(eps: goos.Shape, stage: str, params: Options):
                 center=[(sim_left_x + sim_right_x) / 2, 0, sim_z_center],
                 extents=[sim_right_x - sim_left_x, 0, sim_z_extent],
             ),
-            pml_thickness=[pml_thick, pml_thick, 0, 0, pml_thick, pml_thick]),
+            pml_thickness=[pml_thick, pml_thick, 0, 0, pml_thick, pml_thick],
+        ),
         background=goos.material.Material(index=params.eps_bg),
         outputs=[
             maxwell.Epsilon(name="eps"),
             maxwell.ElectricField(name="field"),
-            maxwell.WaveguideModeOverlap(name="overlap",
-                                         center=[-params.wg_len / 2, 0, 0],
-                                         extents=[0, 1000, 2000],
-                                         normal=[-1, 0, 0],
-                                         mode_num=0,
-                                         power=1),
+            maxwell.WaveguideModeOverlap(
+                name="overlap",
+                center=[-params.wg_len / 2, 0, 0],
+                extents=[0, 1000, 2000],
+                normal=[-1, 0, 0],
+                mode_num=0,
+                power=1,
+            ),
         ],
     )
 
     obj = (1 - goos.abs(sim["overlap"]))**2
-    obj = goos.rename(obj, name="obj_{}".format(stage))
+    obj = goos.rename(obj, name=f"obj_{stage}")
     return obj, sim
 
 
@@ -273,12 +278,10 @@ def visualize(folder: str, step: int):
 
     plt.figure()
     plt.subplot(1, 2, 1)
-    plt.imshow(
-        np.abs(data["monitor_data"]["sim_{}.eps".format(stage)][1].squeeze()))
+    plt.imshow(np.abs(data["monitor_data"][f"sim_{stage}.eps"][1].squeeze()))
     plt.colorbar()
     plt.subplot(1, 2, 2)
-    plt.imshow(
-        np.abs(data["monitor_data"]["sim_{}.field".format(stage)][1].squeeze()))
+    plt.imshow(np.abs(data["monitor_data"][f"sim_{stage}.field"][1].squeeze()))
     plt.colorbar()
     plt.show()
 

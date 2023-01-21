@@ -68,16 +68,19 @@ class OptplanPolyModelType(types.CompoundType):
 
         if model_class is None:
             raise ValueError(
-                "Unknown node, got node type '{}' with metatype '{}'".format(
-                    value["type"], self._node_meta_type))
+                f"""Unknown node, got node type '{value["type"]}' with metatype '{self._node_meta_type}'"""
+            )
 
         return model_class(value, context=context)
 
     def _export(self, value, format, context):  # pylint: disable=redefined-builtin
-        if (not value.__class__ in optplan.GLOBAL_CONTEXT_STACK.
-                get_node_model_dict(self._node_meta_type).values()):
-            raise ValueError("Cannot export model with type '{}'".format(
-                value.__class__))
+        if (
+            value.__class__
+            not in optplan.GLOBAL_CONTEXT_STACK.get_node_model_dict(
+                self._node_meta_type
+            ).values()
+        ):
+            raise ValueError(f"Cannot export model with type '{value.__class__}'")
 
         return value.export(context=context)
 
@@ -107,8 +110,8 @@ class ProblemGraphNode(schema_utils.Model):
         # Validate the name.
         if self.name.startswith("__"):
             raise ValueError(
-                "Name cannot start with two underscores (__), got {}".format(
-                    self.name))
+                f"Name cannot start with two underscores (__), got {self.name}"
+            )
 
         # Verify that reference fields have been appropriately set. This is
         # actually a redundant check since `optplan.loads` and `optplan.dumps`
@@ -135,8 +138,9 @@ class ProblemGraphNode(schema_utils.Model):
                 elif isinstance(field_value, (str, field_type.reference_type)):
                     continue
 
-                raise ValueError("Expected type {} for field {}, got {}".format(
-                    field_type.reference_type, field_name, type(field_value)))
+                raise ValueError(
+                    f"Expected type {field_type.reference_type} for field {field_name}, got {type(field_value)}"
+                )
 
 
 class EmOverlap(ProblemGraphNode):
@@ -176,7 +180,7 @@ class Function(ProblemGraphNode):
             return optplan.Sum(functions=[self, optplan.make_constant(obj)])
         if isinstance(obj, Function):
             return optplan.Sum(functions=[self, obj])
-        raise TypeError("Attempting to add node with type {}".format(type(obj)))
+        raise TypeError(f"Attempting to add node with type {type(obj)}")
 
     def __mul__(self, obj) -> "optplan.Product":
         if isinstance(obj, optplan.Product):
@@ -187,8 +191,7 @@ class Function(ProblemGraphNode):
             return optplan.Product(functions=[self, optplan.make_constant(obj)])
         if isinstance(obj, Function):
             return optplan.Product(functions=[self, obj])
-        raise TypeError("Attempting to multiply node with type {}".format(
-            type(obj)))
+        raise TypeError(f"Attempting to multiply node with type {type(obj)}")
 
     def __pow__(self, obj) -> "optplan.Power":
         if isinstance(obj, numbers.Real):

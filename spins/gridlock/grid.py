@@ -251,7 +251,7 @@ class Grid:
                 low_bound = -0.5
                 high_bound = -0.5
             if (ind < low_bound).any() or (ind > self.shape - high_bound).any():
-                raise GridError('Position outside of grid: {}'.format(ind))
+                raise GridError(f'Position outside of grid: {ind}')
 
         if round_ind:
             rind = np.clip(np.round(ind), 0, self.shape - 1)
@@ -285,7 +285,7 @@ class Grid:
         """
         r = np.squeeze(r)
         if r.size != 3:
-            raise GridError('r must be 3-element vector: {}'.format(r))
+            raise GridError(f'r must be 3-element vector: {r}')
 
         if (which_shifts is not None) and (which_shifts >=
                                            self.shifts.shape[0]):
@@ -297,7 +297,7 @@ class Grid:
             for a in range(3):
                 if self.shape[a] > 1 and (r[a] < sexyz[a][0] or
                                           r[a] > sexyz[a][-1]):
-                    raise GridError('Position[{}] outside of grid!'.format(a))
+                    raise GridError(f'Position[{a}] outside of grid!')
 
         grid_pos = zeros((3,))
         for a in range(3):
@@ -352,29 +352,24 @@ class Grid:
         self.exyz = [np.unique(pixel_edge_coordinates[i]) for i in range(3)]
         for i in range(3):
             if len(self.exyz[i]) != len(pixel_edge_coordinates[i]):
-                warnings.warn(
-                    'Dimension {} had duplicate edge coordinates'.format(i))
+                warnings.warn(f'Dimension {i} had duplicate edge coordinates')
 
-        if is_scalar(periodic):
-            self.periodic = [periodic] * 3
-        else:
-            self.periodic = [False] * 3
-
+        self.periodic = [periodic] * 3 if is_scalar(periodic) else [False] * 3
         self.shifts = np.array(shifts, dtype=float)
         self.comp_shifts = np.array(comp_shifts, dtype=float)
         if self.shifts.shape[1] != 3:
             GridError(
-                'Misshapen shifts on the primary grid; second axis size should be 3,'
-                ' shape is {}'.format(self.shifts.shape))
+                f'Misshapen shifts on the primary grid; second axis size should be 3, shape is {self.shifts.shape}'
+            )
         if self.comp_shifts.shape[1] != 3:
             GridError(
-                'Misshapen shifts on the complementary grid: second axis size should be 3,'
-                ' shape is {}'.format(self.comp_shifts.shape))
+                f'Misshapen shifts on the complementary grid: second axis size should be 3, shape is {self.comp_shifts.shape}'
+            )
         if self.comp_shifts.shape[0] != self.shifts.shape[0]:
             GridError(
                 'Inconsistent number of shifts in the primary and complementary grid'
             )
-        if not ((self.shifts >= 0).all() and (self.comp_shifts >= 0).all()):
+        if not (self.shifts >= 0).all() or not (self.comp_shifts >= 0).all():
             GridError(
                 'Shifts are required to be non-negative for both primary and complementary grid'
             )
@@ -399,12 +394,12 @@ class Grid:
                     if initial[i] is not None:
                         self.grids_bg[i] = np.full(
                             self.shape, initial[i], dtype=complex)
-                else:
-                    if not np.array_equal(initial[i].shape, self.shape):
-                        raise GridError(
-                            'Initial grid sizes must match given coordinates')
+                elif np.array_equal(initial[i].shape, self.shape):
                     self.grids_bg[i] = initial[i]
 
+                else:
+                    raise GridError(
+                        'Initial grid sizes must match given coordinates')
         if isinstance(ext_dir, Direction):
             self.ext_dir = ext_dir.value
         elif is_scalar(ext_dir):
@@ -590,7 +585,7 @@ class Grid:
             dir_slab = dir_slab.value
         elif not is_scalar(dir_slab):
             raise GridError('Invalid slab direction')
-        elif not dir_slab in range(3):
+        elif dir_slab not in range(3):
             raise GridError('Invalid slab direction')
 
         if not is_scalar(center):
@@ -608,7 +603,7 @@ class Grid:
         cuboid_cen = np.array(
             [self.center[a] if a != dir_slab else center for a in range(3)])
         cuboid_extent = np.array([2*np.abs(self.exyz[a][-1]-self.exyz[a][0]) if a !=dir_slab \
-                                  else thickness for a in range(3)])
+                                      else thickness for a in range(3)])
         self.draw_cuboid(cuboid_cen, cuboid_extent, eps)
 
     def fill_cuboid(self, fill_dir: Direction, fill_pol: int,
@@ -627,12 +622,12 @@ class Grid:
             fill_dir = fill_dir.value
         elif not is_scalar(fill_dir):
             raise GridError('Invalid slab direction')
-        elif not dir_slab in range(3):
+        elif dir_slab not in range(3):
             raise GridError('Invalid slab direction')
 
         if not is_scalar(fill_pol):
             raise GridError('Invalid polarity')
-        if not fill_pol in [-1, 1]:
+        if fill_pol not in {-1, 1}:
             raise GridError('Invalid polarity')
 
         if surf_center.ndim != 1 or surf_center.size != 3:
@@ -648,7 +643,7 @@ class Grid:
 
 
         cuboid_center = np.array([surf_center[a] if a != fill_dir else \
-                                     (surf_center[a]+0.5*fill_pol*cuboid_extent[a]) for a in range(3)])
+                                         (surf_center[a]+0.5*fill_pol*cuboid_extent[a]) for a in range(3)])
 
         self.draw_cuboid(cuboid_center, cuboid_extent, eps)
 
@@ -660,12 +655,12 @@ class Grid:
             fill_dir = fill_dir.value
         elif not is_scalar(fill_dir):
             raise GridError('Invalid slab direction')
-        elif not dir_slab in range(3):
+        elif dir_slab not in range(3):
             raise GridError('Invalid slab direction')
 
         if not is_scalar(fill_pol):
             raise GridError('Invalid polarity')
-        if not fill_pol in [-1, 1]:
+        if fill_pol not in {-1, 1}:
             raise GridError('Invalid polarity')
 
         if not is_scalar(surf_center):
@@ -687,7 +682,7 @@ class Grid:
 
         # Calculating the layer coordinates
         self.layer_z = np.sort(np.unique(np.array(self.list_z).flatten('F')))
-        self.layer_polygons = [[] for i in range(self.layer_z.size - 1)]
+        self.layer_polygons = [[] for _ in range(self.layer_z.size - 1)]
 
         # Assigning polynomials into layers
         for i in range(len(self.list_polygons)):
@@ -737,11 +732,7 @@ class Grid:
                 gds_poly2 = gdspy.Polygon(polygon_2, 0)
                 gds_poly = gdspy.fast_boolean(
                     gds_poly1, gds_poly2, 'not', layer=1)
-                if gds_poly is None:
-                    return []
-                else:
-                    return gds_poly.polygons
-
+                return [] if gds_poly is None else gds_poly.polygons
             else:
                 return [polygon_1]
 
@@ -954,7 +945,7 @@ class Grid:
 
         # Now all the layers and polygons should not intersect with each other and can be aliased on the grids
         for i, polygons in enumerate(self.reduced_layer_polygons):
-            for j, polygon in enumerate(self.reduced_layer_polygons[i]):
+            for polygon in self.reduced_layer_polygons[i]:
                 # Iterating over each layer and rendering each polygon
                 if polygon is not None:
                     self.render_polygon(
@@ -964,7 +955,7 @@ class Grid:
                         eps=polygon[1])
 
         # Finally, adding the background permittivity
-        for i in range(0, self.shifts.shape[0]):
+        for i in range(self.shifts.shape[0]):
             self.grids[i] = self.grids[i] + self.grids_bg[i] * self.frac_bg[i]
 
     def get_slice(self,

@@ -140,11 +140,7 @@ def stretch_with_scpml(
         def l_d(x):
             return (x - bound) / (pos[-1] - bound)
 
-        if thickness == 0:
-            slc = slice(None)
-        else:
-            slc = slice(-thickness, None)
-
+        slc = slice(None) if thickness == 0 else slice(-thickness, None)
     dx_ai[slc] *= 1 + 1j * s_function(l_d(pos_a[slc])) / d / s_correction
     dx_bi[slc] *= 1 + 1j * s_function(l_d(pos_b[slc])) / d / s_correction
 
@@ -253,15 +249,15 @@ def make_nonuniform_grid(SimBorders: List[int],
     # size give at that point
     xs = [SimBorders[0]]
     while xs[-1] < SimBorders[1]:
-        xs = xs + [xs[-1] + dxv[int((xs[-1] - x[0]) // step)]]
+        xs += [xs[-1] + dxv[int((xs[-1] - x[0]) // step)]]
     xs = (xs / np.max(xs) * SimBorders[1])
     ys = [SimBorders[2]]
     while ys[-1] < SimBorders[3]:
-        ys = ys + [ys[-1] + dyv[int((ys[-1] - y[0]) // step)]]
+        ys += [ys[-1] + dyv[int((ys[-1] - y[0]) // step)]]
     ys = (ys / np.max(ys) * SimBorders[3])
     zs = [SimBorders[4]]
     while zs[-1] < SimBorders[5]:
-        zs = zs + [zs[-1] + dzv[int((zs[-1] - z[0]) // step)]]
+        zs += [zs[-1] + dzv[int((zs[-1] - z[0]) // step)]]
     zs = (zs / np.max(zs) * SimBorders[5])
 
     # return results

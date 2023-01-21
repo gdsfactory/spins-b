@@ -109,16 +109,18 @@ def make_objective(eps: goos.Shape, stage: str, sim_3d: bool):
         pml_thickness = [400, 400, 400, 400, 0, 0]
 
     sim = maxwell.fdfd_simulation(
-        name="sim_{}".format(stage),
+        name=f"sim_{stage}",
         wavelength=1550,
         eps=eps,
         solver_info=solver_info,
         sources=[
-            maxwell.WaveguideModeSource(center=[-1400, 0, 0],
-                                        extents=[0, 2500, 1000],
-                                        normal=[1, 0, 0],
-                                        mode_num=0,
-                                        power=1)
+            maxwell.WaveguideModeSource(
+                center=[-1400, 0, 0],
+                extents=[0, 2500, 1000],
+                normal=[1, 0, 0],
+                mode_num=0,
+                power=1,
+            )
         ],
         simulation_space=maxwell.SimulationSpace(
             mesh=maxwell.UniformMesh(dx=40),
@@ -126,21 +128,24 @@ def make_objective(eps: goos.Shape, stage: str, sim_3d: bool):
                 center=[0, 0, 0],
                 extents=[4000, 4000, sim_z_extent],
             ),
-            pml_thickness=pml_thickness),
+            pml_thickness=pml_thickness,
+        ),
         background=goos.material.Material(index=1.0),
         outputs=[
             maxwell.Epsilon(name="eps"),
             maxwell.ElectricField(name="field"),
-            maxwell.WaveguideModeOverlap(name="overlap",
-                                         center=[0, 1400, 0],
-                                         extents=[2500, 0, 1000],
-                                         normal=[0, 1, 0],
-                                         mode_num=0,
-                                         power=1),
+            maxwell.WaveguideModeOverlap(
+                name="overlap",
+                center=[0, 1400, 0],
+                extents=[2500, 0, 1000],
+                normal=[0, 1, 0],
+                mode_num=0,
+                power=1,
+            ),
         ],
     )
 
-    obj = goos.rename(-goos.abs(sim["overlap"]), name="obj_{}".format(stage))
+    obj = goos.rename(-goos.abs(sim["overlap"]), name=f"obj_{stage}")
     return obj, sim
 
 

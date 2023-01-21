@@ -35,10 +35,10 @@ class EmObjective(OptimizationFunction):
         total_df_dz = self.calculate_df_dz(efields, struct)
         # TODO(logansu): Cache gradient calculation.
         dz_dp = aslinearoperator(param.calculate_gradient())
-        df_dp = np.conj(dz_dp.adjoint() @ np.conj(
-            total_df_dz + self.calculate_partial_df_dz(efields, struct)))
-
-        return df_dp
+        return np.conj(
+            dz_dp.adjoint()
+            @ np.conj(total_df_dz + self.calculate_partial_df_dz(efields, struct))
+        )
 
     def calculate_df_dz(self, efields, struct):
         # Calculate df/dz using adjoint.
@@ -49,9 +49,7 @@ class EmObjective(OptimizationFunction):
         d = self.adjoint_sim.simulate(
             struct,
             np.conj(partial_df_dx) / (-1j * self.sim.omega))
-        total_df_dz = 2 * np.real(np.conj(np.transpose(d)) @ B)
-
-        return total_df_dz
+        return 2 * np.real(np.conj(np.transpose(d)) @ B)
 
     def calculate_objective_function(self, parametrization):
         struct = parametrization.get_structure()
@@ -164,8 +162,7 @@ class Overlap(EmObjective):
         Cx = np.array(self.objective_C.H.dot(x))
         Cx = np.squeeze(Cx)
         T = self.objective_T
-        f = np.abs(Cx - T)
-        return f
+        return np.abs(Cx - T)
 
     def get_phase(self, param: Parametrization):
         struct = param.get_structure()
@@ -180,9 +177,7 @@ class Overlap(EmObjective):
         struct = param.get_structure()
         efields = self.sim.simulate(struct)
 
-        # Calculate overlap.
-        overlap2 = np.abs(np.array(self.objective_C.H.dot(efields)))**2
-        return overlap2
+        return np.abs(np.array(self.objective_C.H.dot(efields)))**2
 
     def get_electric_fields(self, param: Parametrization):
         return fdfd_tools.unvec(
@@ -287,8 +282,7 @@ class BasicOverlapObjective(EmObjective):
         beta = self.objective_beta
         f0 = ((overlap < alpha) * (alpha - overlap) +
               (beta < overlap) * (overlap - beta))
-        f = np.sum(f0**self.pf)
-        return f
+        return np.sum(f0**self.pf)
 
     def get_phase(self, param: Parametrization):
         struct = param.get_structure()
@@ -305,9 +299,7 @@ class BasicOverlapObjective(EmObjective):
         struct = param.get_structure()
         efields = self.sim.simulate(struct)
 
-        # Calculate overlap.
-        overlap2 = np.abs(np.array(self.objective_C.H.dot(efields)))**2
-        return overlap2
+        return np.abs(np.array(self.objective_C.H.dot(efields)))**2
 
     def get_electric_fields(self, param: Parametrization):
         return fdfd_tools.unvec(
@@ -403,8 +395,7 @@ class PhaseOverlapObjective(EmObjective):
         Cx = np.squeeze(Cx)
         T_complex = self.objective_T_complex
         f0 = np.abs(Cx - T_complex)
-        f = np.sum(f0**self.pf)
-        return f
+        return np.sum(f0**self.pf)
 
     def get_phase(self, param: Parametrization):
         struct = param.get_structure()
@@ -421,9 +412,7 @@ class PhaseOverlapObjective(EmObjective):
         struct = param.get_structure()
         efields = self.sim.simulate(struct)
 
-        # Calculate overlap.
-        overlap2 = np.abs(np.array(self.objective_C.H.dot(efields)))**2
-        return overlap2
+        return np.abs(np.array(self.objective_C.H.dot(efields)))**2
 
     def get_electric_fields(self, param: Parametrization):
         return fdfd_tools.unvec(

@@ -27,8 +27,8 @@ class Sum(optplan.Function):
         if isinstance(obj, (numbers.Number, optplan.ComplexNumber)):
             return Sum(functions=self.functions + [make_constant(obj)])
         raise TypeError(
-            "Attempting to add a node with type {} to type `Sum`.".format(
-                type(obj)))
+            f"Attempting to add a node with type {type(obj)} to type `Sum`."
+        )
 
 
 @optplan.register_node_type()
@@ -50,8 +50,8 @@ class Product(optplan.Function):
         if isinstance(obj, (numbers.Number, optplan.ComplexNumber)):
             return Product(functions=self.functions + [make_constant(obj)])
         raise TypeError(
-            "Attempting to multiply a node with type {} to type `Product`.".
-            format(type(obj)))
+            f"Attempting to multiply a node with type {type(obj)} to type `Product`."
+        )
 
 
 @optplan.register_node_type()

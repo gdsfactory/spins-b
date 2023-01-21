@@ -103,25 +103,20 @@ class GDSImport:
         if cell_name is None:
             max_num_polys = 0
             for cell in top_level_cells:
-                # Ignore cells that are hidden
                 if cell.name.startswith("$$$"):
                     continue
-                else:
-                    num_polys = 0
-                    cell.flatten()
+                cell.flatten()
 
-                    polygon_sets = cell.get_polygonsets()
-                    for polygon_set in polygon_sets:
-                        num_polys += len(polygon_set.polygons)
-
-                    if max_num_polys == num_polys:
-                        raise ValueError(
-                            "Multiple top level cells with same number of "
-                            "polygons. Unable to uniquely identify top level"
-                            " cell. Please specify cell by name instead.")
-                    if max_num_polys < num_polys:
-                        max_num_polys = num_polys
-                        max_poly_tlc = cell
+                polygon_sets = cell.get_polygonsets()
+                num_polys = sum(len(polygon_set.polygons) for polygon_set in polygon_sets)
+                if max_num_polys == num_polys:
+                    raise ValueError(
+                        "Multiple top level cells with same number of "
+                        "polygons. Unable to uniquely identify top level"
+                        " cell. Please specify cell by name instead.")
+                if max_num_polys < num_polys:
+                    max_num_polys = num_polys
+                    max_poly_tlc = cell
 
             if max_num_polys > 0:
                 return max_poly_tlc
@@ -132,7 +127,7 @@ class GDSImport:
             for cell in top_level_cells:
                 if cell.name == cell_name:
                     return cell.flatten()
-            raise ValueError("Cell name not found, got {}.".format(cell_name))
+            raise ValueError(f"Cell name not found, got {cell_name}.")
 
     def get_bounding_box(self, polygon_coords):
         """Returns a NamedTuple which describes the bounding box of a polygon.
@@ -160,9 +155,7 @@ class GDSImport:
         y_max = max(np_poly_coords[:, 1]) * 1000
         y_min = min(np_poly_coords[:, 1]) * 1000
 
-        box = Box(x_minmax=[x_min, x_max], y_minmax=[y_min, y_max])
-
-        return box
+        return Box(x_minmax=[x_min, x_max], y_minmax=[y_min, y_max])
 
     def get_bounding_boxes(self, layer):
         """Returns a list containing the bounding box for polygons in layer.
@@ -178,14 +171,10 @@ class GDSImport:
 
         """
 
-        boxes = []
         if layer not in self.layers:
             return []
 
-        for polygon in self.layers[layer]:
-            boxes.append(self.get_bounding_box(polygon))
-
-        return boxes
+        return [self.get_bounding_box(polygon) for polygon in self.layers[layer]]
 
     def get_polygons(self, layer):
         """Returns a list of all polygons in the specified layer.
@@ -202,6 +191,4 @@ class GDSImport:
         Raises:
             ValueError: If layer cannot be found.
         """
-        if layer not in self.layers:
-            return []
-        return self.layers[layer]
+        return [] if layer not in self.layers else self.layers[layer]

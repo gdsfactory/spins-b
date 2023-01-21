@@ -34,6 +34,4 @@ class ConstantMaterial:
 
 
 def get_material(mat: Material):
-    if mat is None:
-        return None
-    return ConstantMaterial(mat.to_native()["index"])
+    return None if mat is None else ConstantMaterial(mat.to_native()["index"])

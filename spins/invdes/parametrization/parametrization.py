@@ -239,10 +239,7 @@ class CubicParam(Parametrization):
 
     def get_structure(self) -> np.ndarray:
         z_cubic = self.vec2f @ self.vector
-        if self.k:
-            return 1 / (1 + np.exp(-self.k * (2 * z_cubic - 1)))
-        else:
-            return z_cubic
+        return 1 / (1 + np.exp(-self.k * (2 * z_cubic - 1))) if self.k else z_cubic
 
     def calculate_gradient(self) -> np.ndarray:
         z_cubic = self.vec2f @ self.vector
@@ -491,6 +488,6 @@ class HermiteParam(Parametrization):
         def callback(v):
             nonlocal iter_num
             iter_num += 1
-            print('fit2eps-continous: ' + str(iter_num))
+            print(f'fit2eps-continous: {iter_num}')
 
         opt_cont(obj, self, callback=callback)

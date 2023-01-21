@@ -36,11 +36,13 @@ def raster_1D(poly_x: np.ndarray,
             if `grid_x` has less than 2 elements.
     """
     if poly_x.size != 2:
-        raise ValueError("Expected `poly_x` to have exactly 2 elements, got "
-                         "{} instead.".format(poly_x.size))
+        raise ValueError(
+            f"Expected `poly_x` to have exactly 2 elements, got {poly_x.size} instead."
+        )
     if grid_x.size < 2:
-        raise ValueError("Expected `grid_x` to have at least 2 elements, got "
-                         "{} instead.".format(grid_x.size))
+        raise ValueError(
+            f"Expected `grid_x` to have at least 2 elements, got {grid_x.size} instead."
+        )
 
     # Get the dimensions of the grid.
     dim = grid_x.size
@@ -431,12 +433,13 @@ def raster_2D(poly_xy: np.ndarray,
             or `grid_y` have a size less than 2.
     """
     if poly_xy.shape[0] != 2:
-        raise ValueError("Expected `poly_xy` to have 2 rows, got {} instead.".
-                         format(poly_xy.shape[0]))
+        raise ValueError(
+            f"Expected `poly_xy` to have 2 rows, got {poly_xy.shape[0]} instead."
+        )
     if grid_x.size < 2 or grid_y.size < 2:
-        raise ValueError("Expected both `grid_x` and `grid_y` to have atleast 2"
-                         " elements, got sizes of {} and {} respectively."
-                         .format(grid_x.size, grid_y.size))
+        raise ValueError(
+            f"Expected both `grid_x` and `grid_y` to have atleast 2 elements, got sizes of {grid_x.size} and {grid_y.size} respectively."
+        )
 
     # Oversample the polygon by including its intersection with the grid as
     # new vertices.

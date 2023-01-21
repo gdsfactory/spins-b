@@ -180,8 +180,8 @@ def MakeXYcubic(x_vector: np.array, y_vector: np.array) -> (sparse.coo.coo_matri
     xy_x_diag_v = []
     xy_y_diag_v = []
 
-    for i in range(0, 4):
-        for j in range(0, 4):
+    for i in range(4):
+        for j in range(4):
             xy = x[i] * y[j]
             xy_x = x_x[i] * y[j]
             xy_y = x[i] * y_y[j]
@@ -234,8 +234,8 @@ def MakeDXDY_inv(dx_vector: np.array,
 
     diff_x_diff_y = np.array([])
 
-    for i in range(0, 4):
-        for j in range(0, 4):
+    for i in range(4):
+        for j in range(4):
             diff_x_diff_y = np.append(diff_x_diff_y, diff_y[i] * diff_x[j])
 
     return sparse.diags(diff_x_diff_y, 0, shape=(16 * n_p, 16 * n_p))
@@ -312,8 +312,8 @@ def MakeXYcubic_secondDerivative(
     xy_xx_diag_v = []
     xy_yy_diag_v = []
 
-    for i in range(0, 4):
-        for j in range(0, 4):
+    for i in range(4):
+        for j in range(4):
             xy = x[i] * y[j]
             xy_x = x_x[i] * y[j]
             xy_y = x[i] * y_y[j]
@@ -435,8 +435,7 @@ def Phi2fii(
     periodicity_matrix = sparse.eye(
         (len(xq_vector) - periodicity[0]) * (len(yq_vector) - periodicity[1]))
     if periodicity[0] == 1:
-        shp = (len(xq_vector),
-               len(yq_vector[0:len(yq_vector) - periodicity[1]]))
+        shp = len(xq_vector), len(yq_vector[:len(yq_vector) - periodicity[1]])
         periodicity_matrix = duplicate_boundary_data(shp,
                                                      0)[0] @ periodicity_matrix
     if periodicity[1] == 1:
@@ -506,11 +505,11 @@ def makeDxmatrix(m_size: np.array) -> sparse.csc.csc_matrix:
     ind_i = []
     ind_j = []
     values = []
-    for i in range(0, m_size[0]):
-        for j in range(0, m_size[1]):
+    for i in range(m_size[0]):
+        for j in range(m_size[1]):
             ind = np.ravel_multi_index([i, j], m_size, order="F")
+            ind_i.extend([ind])
             if i == m_size[0] - 1:
-                ind_i.extend([ind])
                 ind_j.extend(
                     [np.ravel_multi_index([i - 1, j], m_size, order="F")])
                 values.extend([-1])
@@ -518,7 +517,6 @@ def makeDxmatrix(m_size: np.array) -> sparse.csc.csc_matrix:
                 ind_j.extend([np.ravel_multi_index([i, j], m_size, order="F")])
                 values.extend([1])
             elif i == 0:
-                ind_i.extend([ind])
                 ind_j.extend([np.ravel_multi_index([i, j], m_size, order="F")])
                 values.extend([-1])
                 ind_i.extend([ind])
@@ -526,7 +524,6 @@ def makeDxmatrix(m_size: np.array) -> sparse.csc.csc_matrix:
                     [np.ravel_multi_index([i + 1, j], m_size, order="F")])
                 values.extend([1])
             else:
-                ind_i.extend([ind])
                 ind_j.extend(
                     [np.ravel_multi_index([i - 1, j], m_size, order="F")])
                 values.extend([-1 / 2])
@@ -543,11 +540,11 @@ def makeDymatrix(m_size: np.array) -> sparse.csc.csc_matrix:
     ind_i = []
     ind_j = []
     values = []
-    for i in range(0, m_size[0]):
-        for j in range(0, m_size[1]):
+    for i in range(m_size[0]):
+        for j in range(m_size[1]):
             ind = np.ravel_multi_index([i, j], m_size, order="F")
+            ind_i.extend([ind])
             if j == m_size[1] - 1:
-                ind_i.extend([ind])
                 ind_j.extend(
                     [np.ravel_multi_index([i, j - 1], m_size, order="F")])
                 values.extend([-1])
@@ -555,7 +552,6 @@ def makeDymatrix(m_size: np.array) -> sparse.csc.csc_matrix:
                 ind_j.extend([np.ravel_multi_index([i, j], m_size, order="F")])
                 values.extend([1])
             elif j == 0:
-                ind_i.extend([ind])
                 ind_j.extend([np.ravel_multi_index([i, j], m_size, order="F")])
                 values.extend([-1])
                 ind_i.extend([ind])
@@ -563,7 +559,6 @@ def makeDymatrix(m_size: np.array) -> sparse.csc.csc_matrix:
                     [np.ravel_multi_index([i, j + 1], m_size, order="F")])
                 values.extend([1])
             else:
-                ind_i.extend([ind])
                 ind_j.extend(
                     [np.ravel_multi_index([i, j - 1], m_size, order="F")])
                 values.extend([-1 / 2])

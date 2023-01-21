@@ -114,18 +114,18 @@ def convert_element_list(monitor_descriptions: List[MonitorDescription]
         if m.joiner_id in monitor_dict:
             # Check that all the other fields are the same for this joined monitor.
             m_joined = monitor_dict[m.joiner_id]
-            if not m.monitor_type == m_joined.monitor_type:
-                raise ValueError("Monitor type for " + m.monitor.name +
-                                 " is inconsistent for joiner id " +
-                                 m.joiner_id)
-            if not m.scalar_operation == m_joined.scalar_operation:
-                raise ValueError("Scalar operation for " + m.monitor.name +
-                                 " is inconsistent for joiner id " +
-                                 m.joiner_id)
-            if not m.vector_operation == m_joined.vector_operation:
-                raise ValueError("Vector operation for " + m.monitor.name +
-                                 " is inconsistent for joiner id " +
-                                 m.joiner_id)
+            if m.monitor_type != m_joined.monitor_type:
+                raise ValueError(
+                    f"Monitor type for {m.monitor.name} is inconsistent for joiner id {m.joiner_id}"
+                )
+            if m.scalar_operation != m_joined.scalar_operation:
+                raise ValueError(
+                    f"Scalar operation for {m.monitor.name} is inconsistent for joiner id {m.joiner_id}"
+                )
+            if m.vector_operation != m_joined.vector_operation:
+                raise ValueError(
+                    f"Vector operation for {m.monitor.name} is inconsistent for joiner id {m.joiner_id}"
+                )
 
             # All fields are consistent with the joined monitor fields, so add this monitor name.
             monitor_dict[m.joiner_id].monitor_names.append(m.monitor.name)

@@ -12,14 +12,14 @@ def test_top_sort_affinity():
         "g": ["h"],
         "h": []
     }
-    affinity_nodes = set(["b", "g", "f"])
+    affinity_nodes = {"b", "g", "f"}
 
     sorted_nodes = graph_executor._top_sort_affinity(graph, affinity_nodes)
 
     # The topological ordering must be a[cde][bf]gh where square brackets denote
     # that any combination is acceptable.
     assert sorted_nodes[0] == "a"
-    assert set(sorted_nodes[1:4]) == set(["c", "d", "e"])
-    assert set(sorted_nodes[4:6]) == set(["b", "f"])
+    assert set(sorted_nodes[1:4]) == {"c", "d", "e"}
+    assert set(sorted_nodes[4:6]) == {"b", "f"}
     assert sorted_nodes[6] == "g"
     assert sorted_nodes[7] == "h"

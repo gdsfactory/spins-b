@@ -77,11 +77,7 @@ class GradientOptimizer:
         if self._max_iters:
             stop_iter_list.append(self._max_iters)
 
-        # Compute stopping iteration.
-        stop_iter = None
-        if stop_iter_list:
-            stop_iter = np.min(stop_iter_list)
-
+        stop_iter = np.min(stop_iter_list) if stop_iter_list else None
         while True:
             stop_opt = self.iterate()
             # Increase iteration count and break if done.

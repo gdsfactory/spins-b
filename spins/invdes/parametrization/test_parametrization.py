@@ -101,9 +101,10 @@ class TestCubicParam(unittest.TestCase):
         val_k = 1 / (1 + np.exp(-par.k * (2 * val - 1)))
         structure = np.reshape(par.get_structure(), shp_f, order='F')
         np.testing.assert_allclose(
-            structure[0:shp_f[0] // 2],
-            np.flipud(structure[-shp_f[0] // 2 + 1:]),
-            rtol=1e-9)
+            structure[: shp_f[0] // 2],
+            np.flipud(structure[-shp_f[0] // 2 + 1 :]),
+            rtol=1e-9,
+        )
         # sym 1
         par = param.CubicParam(
             init_val, coarse_x, coarse_y, fine_x, fine_y, symmetry=[0, 1])
@@ -376,9 +377,10 @@ class TestHermiteParam(unittest.TestCase):
         structure = np.reshape(par.get_structure(), shp_f, order='F')
         len_vec = 4 * shp_c[0] * shp_c[1]
         np.testing.assert_allclose(
-            structure[0:shp_f[0] // 2],
-            np.flipud(structure[-shp_f[0] // 2 + 1:]),
-            rtol=1e-9)
+            structure[: shp_f[0] // 2],
+            np.flipud(structure[-shp_f[0] // 2 + 1 :]),
+            rtol=1e-9,
+        )
 
         # sym 1
         par = param.HermiteParam(

@@ -132,9 +132,7 @@ def make_near2farfield_matrix(points: np.array,
     rm_radial = sparse.bmat([[zeros, zeros, zeros], [zeros, Id, zeros],
                              [zeros, zeros, Id]])
 
-    t = rm_radial @ t_sp
-
-    return t
+    return rm_radial @ t_sp
 
 
 def make_near2farfield_box_matrix(points: np.array,
@@ -353,14 +351,14 @@ def move2H_matrix(axis: int,
         av_Hx = sparse.eye(n)
         av_Hy = fwY @ bwX
         av_Hz = fwZ @ bwX
-    if axis == 1:
+    elif axis == 1:
         av_Ex = fwZ
         av_Ey = fwZ @ fwX @ bwY
         av_Ez = fwX
         av_Hx = fwX @ bwY
         av_Hy = sparse.eye(n)
         av_Hz = fwZ @ bwY
-    if axis == 2:
+    elif axis == 2:
         av_Ex = fwY
         av_Ey = fwX
         av_Ez = fwY @ fwX @ bwZ
@@ -418,13 +416,13 @@ def make_fourier_matrix(x: np.array, y: np.array, z: np.array, d_area: np.array,
     zeros = sparse.csr_matrix(
         (single_fourier_matrix.shape[0], single_fourier_matrix.shape[1]),
         dtype=float)
-    fourier_matrix = sparse.vstack([
-        sparse.hstack([single_fourier_matrix, zeros, zeros]),
-        sparse.hstack([zeros, single_fourier_matrix, zeros]),
-        sparse.hstack([zeros, zeros, single_fourier_matrix])
-    ])
-
-    return fourier_matrix
+    return sparse.vstack(
+        [
+            sparse.hstack([single_fourier_matrix, zeros, zeros]),
+            sparse.hstack([zeros, single_fourier_matrix, zeros]),
+            sparse.hstack([zeros, zeros, single_fourier_matrix]),
+        ]
+    )
 
 
 def make_sphere_point(interpolation_count: int) -> (np.array, np.array):
@@ -449,7 +447,7 @@ def make_sphere_point(interpolation_count: int) -> (np.array, np.array):
     triangles = np.array([[0, 1, 4], [1, 2, 4], [2, 3, 4], [3, 0, 4], [0, 1, 5],
                           [1, 2, 5], [2, 3, 5], [3, 0, 5]])
     # refine mesh on sphere
-    for n in range(interpolation_count):
+    for _ in range(interpolation_count):
         for i in range(triangles.shape[0]):
             # Make points on the edges of every triangle
             p1 = points[triangles[i, 0]] + points[triangles[i, 1]]
@@ -489,10 +487,11 @@ def make_sphere_point(interpolation_count: int) -> (np.array, np.array):
                  [triangles[i, 1], index1,
                   index2], [triangles[i, 2], index3, index2]])
             # add the new triangles to the triangle list
-            if i == 0:
-                triangles_temp = new_triangles
-            else:
-                triangles_temp = np.vstack([triangles_temp, new_triangles])
+            triangles_temp = (
+                new_triangles
+                if i == 0
+                else np.vstack([triangles_temp, new_triangles])
+            )
         # update the triangle list
         triangles = triangles_temp
 
@@ -522,7 +521,7 @@ def make_half_sphere_point(interpolation_count: int,
                        [0, 0, polarity]])
     triangles = np.array([[0, 1, 4], [1, 2, 4], [2, 3, 4], [3, 0, 4]])
     # refine mesh on sphere
-    for n in range(interpolation_count):
+    for _ in range(interpolation_count):
         for i in range(triangles.shape[0]):
             # Make points on the edges of every triangle
             p1 = points[triangles[i, 0]] + points[triangles[i, 1]]
@@ -556,10 +555,11 @@ def make_half_sphere_point(interpolation_count: int,
                  [triangles[i, 1], index1,
                   index2], [triangles[i, 2], index3, index2]])
             # add the new triangles to the triangle list
-            if i == 0:
-                triangles_temp = new_triangles
-            else:
-                triangles_temp = np.vstack([triangles_temp, new_triangles])
+            triangles_temp = (
+                new_triangles
+                if i == 0
+                else np.vstack([triangles_temp, new_triangles])
+            )
         # update the triangle list
         triangles = triangles_temp
 
@@ -611,9 +611,7 @@ def cart2spheric_matrix(x: np.array, y: np.array, z: np.array,
     t21 = sparse.csr_matrix(sp.sparse.diags(t_3d[2, 1] * np.ones_like(x)))
     t22 = sparse.csr_matrix(sp.sparse.diags(t_3d[2, 2] * np.ones_like(x)))
 
-    t = sparse.bmat([[t00, t01, t02], [t10, t11, t12], [t20, t21, t22]])
-
-    return t
+    return sparse.bmat([[t00, t01, t02], [t10, t11, t12], [t20, t21, t22]])
 
 
 def spheric2cart_matrix(r: np.array, th: np.array, ph: np.array,
@@ -649,9 +647,7 @@ def spheric2cart_matrix(r: np.array, th: np.array, ph: np.array,
     t21 = sparse.csr_matrix(sp.sparse.diags(t_3d[2, 1] * np.ones_like(x)))
     t22 = sparse.csr_matrix(sp.sparse.diags(t_3d[2, 2] * np.ones_like(x)))
 
-    t = sparse.bmat([[t00, t01, t02], [t10, t11, t12], [t20, t21, t22]])
-
-    return t
+    return sparse.bmat([[t00, t01, t02], [t10, t11, t12], [t20, t21, t22]])
 
 
 def spheric2spheric_matrix(r: np.array,
@@ -667,9 +663,7 @@ def spheric2spheric_matrix(r: np.array,
     sp2cart = spheric2cart_matrix(r, th, ph, initial_axis)
     cart2sp = cart2spheric_matrix(x, y, z, new_axis)
 
-    t = cart2sp @ sp2cart
-
-    return t
+    return cart2sp @ sp2cart
 
 
 # Functions needed to plot the far field
@@ -731,9 +725,7 @@ def points2triangles_averaging_matrix(points: np.ndarray,
     colind = flatten(triangles)
     data = 1 / 3 * np.ones_like(rowind)
 
-    av_matrix = sparse.csr_matrix((data, (rowind, colind)))
-
-    return av_matrix
+    return sparse.csr_matrix((data, (rowind, colind)))
 
 
 def area_selection_vector(points: np.ndarray, triangles: np.ndarray,
@@ -793,11 +785,15 @@ def triangle_area_vector(points: np.ndarray,
     p0 = points[triangles[:, 1]] - points[triangles[:, 0]]
     p1 = points[triangles[:, 2]] - points[triangles[:, 0]]
 
-    area = 0.5 * ((p0[:, 1] * p1[:, 2] - p0[:, 2] * p1[:, 1])**2 +
-                  (p0[:, 2] * p1[:, 0] - p0[:, 0] * p1[:, 2])**2 +
-                  (p0[:, 0] * p1[:, 1] - p0[:, 1] * p1[:, 0])**2)**0.5
-
-    return area
+    return (
+        0.5
+        * (
+            (p0[:, 1] * p1[:, 2] - p0[:, 2] * p1[:, 1]) ** 2
+            + (p0[:, 2] * p1[:, 0] - p0[:, 0] * p1[:, 2]) ** 2
+            + (p0[:, 0] * p1[:, 1] - p0[:, 1] * p1[:, 0]) ** 2
+        )
+        ** 0.5
+    )
 
 
 # main for quick test

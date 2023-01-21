@@ -54,11 +54,7 @@ class FdfdSimulation:
         self.pmc = pmc
         self.pemc = pemc
         self.symmetry = symmetry
-        if bloch_vec is None:
-            self.bloch_vec = np.zeros(3)
-        else:
-            self.bloch_vec = bloch_vec
-
+        self.bloch_vec = np.zeros(3) if bloch_vec is None else bloch_vec
         # For caching uses.
         self.cache = [None] * cache_size
         self.lock = threading.Lock()
@@ -237,9 +233,7 @@ class AdjointFdfdSimulation:
         for k in range(3):
             new_J[k] /= np.conj(s[k])
         new_J = fdfd_tools.vec(new_J)
-        mu = None
-        if self.sim.mu is not None:
-            mu = np.conj(fdfd_tools.vec(self.sim.mu))
+        mu = np.conj(fdfd_tools.vec(self.sim.mu)) if self.sim.mu is not None else None
         sim_args = {
             'omega': np.conj(self.sim.omega),
             'dxes': dxes,

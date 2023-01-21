@@ -307,7 +307,8 @@ def create_objective(
         )
         # Append to monitor list for each wavelength
         monitor_list.append(
-            optplan.FieldMonitor(name="mon_eps_" + str(wlen), function=epsilon))
+            optplan.FieldMonitor(name=f"mon_eps_{str(wlen)}", function=epsilon)
+        )
 
         # Add a Gaussian source that is angled at 10 degrees.
         sim = optplan.FdfdSimulation(
@@ -329,11 +330,12 @@ def create_objective(
         )
         monitor_list.append(
             optplan.FieldMonitor(
-                name="mon_field_" + str(wlen),
+                name=f"mon_field_{str(wlen)}",
                 function=sim,
                 normal=[0, 1, 0],
                 center=[0, 0, 0],
-            ))
+            )
+        )
 
         wg_overlap = optplan.WaveguideModeOverlap(
             center=[-grating_len / 2 - 1000, 0, wg_thickness / 2],
@@ -346,7 +348,9 @@ def create_objective(
             optplan.Overlap(simulation=sim, overlap=wg_overlap))**2
         monitor_list.append(
             optplan.SimpleMonitor(
-                name="mon_power_" + str(wlen), function=power))
+                name=f"mon_power_{str(wlen)}", function=power
+            )
+        )
 
         if not MINIMIZE_BACKREFLECTION:
             # Spins minimizes the objective function, so to make `power` maximized,
@@ -373,7 +377,9 @@ def create_objective(
                 optplan.Overlap(simulation=refl_sim, overlap=wg_overlap))**2
             monitor_list.append(
                 optplan.SimpleMonitor(
-                    name="mon_refl_power_" + str(wlen), function=refl_power))
+                    name=f"mon_refl_power_{str(wlen)}", function=refl_power
+                )
+            )
 
             # We now have two sub-objectives: Maximize transmission and minimize
             # back-reflection, so we must an objective that defines the appropriate
@@ -423,14 +429,11 @@ def create_transformations(
     Returns:
         A list of transformations.
     """
-    # Setup empty transformation list.
-    trans_list = []
-
     # First do continuous relaxation optimization.
     cont_param = optplan.PixelParametrization(
         simulation_space=sim_space,
         init_method=optplan.UniformInitializer(min_val=0, max_val=1))
-    trans_list.append(
+    trans_list = [
         optplan.Transformation(
             name="opt_cont",
             parametrization=cont_param,
@@ -440,12 +443,14 @@ def create_transformations(
                 monitor_lists=optplan.ScipyOptimizerMonitorList(
                     callback_monitors=monitors,
                     start_monitors=monitors,
-                    end_monitors=monitors),
+                    end_monitors=monitors,
+                ),
                 optimization_options=optplan.ScipyOptimizerOptions(
-                    maxiter=cont_iters),
+                    maxiter=cont_iters
+                ),
             ),
-        ))
-
+        )
+    ]
     # If true, do another round of continous optimization with a discreteness bias.
     if DISCRETENESS_PENALTY:
         # Define parameters necessary to normaize discrete penalty term
@@ -496,37 +501,41 @@ def create_transformations(
     # room later on.
     disc_param = optplan.GratingParametrization(
         simulation_space=sim_space, inverted=True)
-    trans_list.append(
-        optplan.Transformation(
-            name="cont_to_disc",
-            parametrization=disc_param,
-            transformation=optplan.GratingEdgeFitTransformation(
-                parametrization=cont_param,
-                min_feature=cont_to_disc_factor * min_feature)))
-
-    # Discrete optimization.
-    trans_list.append(
-        optplan.Transformation(
-            name="opt_disc",
-            parametrization=disc_param,
-            transformation=optplan.ScipyOptimizerTransformation(
-                optimizer="SLSQP",
-                objective=obj,
-                constraints_ineq=[
-                    optplan.GratingFeatureConstraint(
-                        min_feature_size=min_feature,
-                        simulation_space=sim_space,
-                        boundary_constraint_scale=1.0,
-                    )
-                ],
-                monitor_lists=optplan.ScipyOptimizerMonitorList(
-                    callback_monitors=monitors,
-                    start_monitors=monitors,
-                    end_monitors=monitors),
-                optimization_options=optplan.ScipyOptimizerOptions(
-                    maxiter=disc_iters),
+    trans_list.extend(
+        (
+            optplan.Transformation(
+                name="cont_to_disc",
+                parametrization=disc_param,
+                transformation=optplan.GratingEdgeFitTransformation(
+                    parametrization=cont_param,
+                    min_feature=cont_to_disc_factor * min_feature,
+                ),
             ),
-        ))
+            optplan.Transformation(
+                name="opt_disc",
+                parametrization=disc_param,
+                transformation=optplan.ScipyOptimizerTransformation(
+                    optimizer="SLSQP",
+                    objective=obj,
+                    constraints_ineq=[
+                        optplan.GratingFeatureConstraint(
+                            min_feature_size=min_feature,
+                            simulation_space=sim_space,
+                            boundary_constraint_scale=1.0,
+                        )
+                    ],
+                    monitor_lists=optplan.ScipyOptimizerMonitorList(
+                        callback_monitors=monitors,
+                        start_monitors=monitors,
+                        end_monitors=monitors,
+                    ),
+                    optimization_options=optplan.ScipyOptimizerOptions(
+                        maxiter=disc_iters
+                    ),
+                ),
+            ),
+        )
+    )
     return trans_list
 
 
@@ -561,7 +570,7 @@ def view_opt_quick(save_folder: str) -> None:
         log_data = pickle.load(fp)
         for key, data in log_data["monitor_data"].items():
             if np.isscalar(data):
-                print("{}: {}".format(key, data.squeeze()))
+                print(f"{key}: {data.squeeze()}")
 
 
 def resume_opt(save_folder: str) -> None:
@@ -609,14 +618,15 @@ def gen_gds(save_folder: str, grating_len: float, wg_width: float) -> None:
             coords = np.insert(coords, 0, 0, axis=0)
             coords = np.insert(coords, -1, grating_len, axis=0)
 
-    # `coords` now contains the location of the grating edges. Now draw a
-    # series of rectangles to represent the grating.
-    grating_poly = []
-    for i in range(0, len(coords), 2):
-        grating_poly.append(
-            ((coords[i], -wg_width / 2), (coords[i], wg_width / 2),
-             (coords[i + 1], wg_width / 2), (coords[i + 1], -wg_width / 2)))
-
+    grating_poly = [
+        (
+            (coords[i], -wg_width / 2),
+            (coords[i], wg_width / 2),
+            (coords[i + 1], wg_width / 2),
+            (coords[i + 1], -wg_width / 2),
+        )
+        for i in range(0, len(coords), 2)
+    ]
     # Save the grating to `grating.gds`.
     grating = gdspy.Cell("GRATING", exclude_from_current=True)
     grating.add(gdspy.PolygonSet(grating_poly, 100))

@@ -33,11 +33,7 @@ else:
             return True
 
         # Python 3.6
-        if not hasattr(cls, "__origin__"):
-            return False
-        if cls.__origin__ is Union:
-            return True
-        return False
+        return cls.__origin__ is Union if hasattr(cls, "__origin__") else False
 
     typing_inspect.is_union_type = is_union_type
 
@@ -69,7 +65,7 @@ if not hasattr(typing, "get_args"):
         elif issubclass(cls, List):
             return cls.__args__
         else:
-            raise ValueError("Cannot get type arguments for {}".format(cls))
+            raise ValueError(f"Cannot get type arguments for {cls}")
 
     typing.get_args = get_args
 
@@ -137,12 +133,11 @@ def construct_schema(schema_name: str,
     if skip_first_arg:
         param_list = param_list[1:]
 
-    model_args = {}
-    for param in param_list:
-        model_args[param.name] = _convert_param_to_schematics(param)
-
+    model_args = {
+        param.name: _convert_param_to_schematics(param) for param in param_list
+    }
     if other_fields:
-        model_args.update(other_fields)
+        model_args |= other_fields
     return type(schema_name, tuple(base_classes), model_args)
 
 
@@ -196,8 +191,7 @@ def _convert_type_to_schematics(typ) -> Tuple:
                 arg_typ, arg_args = _convert_type_to_schematics(arg)
                 schema_args.append(arg_typ(*arg_args))
         else:
-            raise ValueError(
-                "Cannot convert type to schema type, got {}".format(typ))
+            raise ValueError(f"Cannot convert type to schema type, got {typ}")
     elif issubclass(typ, optplan.ProblemGraphNode):
         schema_type = optplan.ReferenceType
         schema_args = [typ.Schema]
@@ -209,8 +203,7 @@ def _convert_type_to_schematics(typ) -> Tuple:
         schema_type = types.PolyModelType
         schema_args = [typ]
     else:
-        raise ValueError(
-            "Cannot convert type to schema type, got {}".format(typ))
+        raise ValueError(f"Cannot convert type to schema type, got {typ}")
     return schema_type, schema_args
 
 
@@ -264,8 +257,7 @@ def generate_name(model_type: str) -> str:
     if model_type not in optplan.PROBLEM_GRAPH_NAME_MAP:
         optplan.PROBLEM_GRAPH_NAME_MAP[model_type] = 0
 
-    name = "{}.{}".format(model_type,
-                          optplan.PROBLEM_GRAPH_NAME_MAP[model_type])
+    name = f"{model_type}.{optplan.PROBLEM_GRAPH_NAME_MAP[model_type]}"
 
     optplan.PROBLEM_GRAPH_NAME_MAP[model_type] += 1
 
@@ -313,18 +305,16 @@ def _iter_optplan_fields(
     # Wrap `process_field` so that returning `None` is same as returning the
     # child.
     def process_field_wrapped(
-        parent: models.Model,
-        child: Union[str, optplan.ProblemGraphNodeSchema],
-        field_type: optplan.ReferenceType,
-    ) -> optplan.ProblemGraphNodeSchema:
+            parent: models.Model,
+            child: Union[str, optplan.ProblemGraphNodeSchema],
+            field_type: optplan.ReferenceType,
+        ) -> optplan.ProblemGraphNodeSchema:
         if pass_field_info:
             return_val = process_field(parent, child, field_type)
         else:
             return_val = process_field(parent, child)
 
-        if return_val is None:
-            return child
-        return return_val
+        return child if return_val is None else return_val
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -396,8 +386,9 @@ def validate(plan: optplan.OptimizationPlanSchema) -> None:
             node_name = node.name
             node.validate()
         except Exception as exc:
-            raise ValueError("Error encountered when validating node {}".format(
-                node_name)) from exc
+            raise ValueError(
+                f"Error encountered when validating node {node_name}"
+            ) from exc
 
     # Now validate the plan schema itself just in case we missed something
     # from the previous checks.
@@ -407,7 +398,7 @@ def validate(plan: optplan.OptimizationPlanSchema) -> None:
     names = set()
     for node in plan.nodes:
         if node.name in names:
-            raise ValueError("Nonunique name found: {}".format(node.name))
+            raise ValueError(f"Nonunique name found: {node.name}")
         names.add(node.name)
 
 
@@ -449,8 +440,7 @@ def _validate_optplan_version(version: str) -> None:
     """
     version_parts = [int(part) for part in version.split(".")]
     if version_parts[0] < 0 or version_parts[1] < 3:
-        raise ValueError(
-            "Optplan must be at least version 0.3.0, got {}".format(version))
+        raise ValueError(f"Optplan must be at least version 0.3.0, got {version}")
 
 
 def loads(serialized_plan: str) -> optplan.OptimizationPlanSchema:
