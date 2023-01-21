@@ -77,11 +77,7 @@ def create_sim_space(gds_fg: str, gds_bg: str) -> optplan.SimulationSpace:
         A `SimulationSpace` description.
     """
     mat_oxide = optplan.Material(index=optplan.ComplexNumber(real=1.5))
-    if SIM_2D:
-        device_index = SI_2D_INDEX
-    else:
-        device_index = SI_3D_INDEX
-
+    device_index = SI_2D_INDEX if SIM_2D else SI_3D_INDEX
     mat_stack = optplan.GdsMaterialStack(
         background=mat_oxide,
         stack=[
@@ -185,11 +181,12 @@ def create_objective(sim_space: optplan.SimulationSpace
         # Take a field slice through the z=0 plane to save each iteration.
         monitor_list.append(
             optplan.FieldMonitor(
-                name="field{}".format(wlen),
+                name=f"field{wlen}",
                 function=sim,
                 normal=[0, 0, 1],
                 center=[0, 0, 0],
-            ))
+            )
+        )
         if wlen == 1300:
             # Only save the permittivity at 1300 nm because the permittivity
             # at 1550 nm is the same (as a constant permittivity value was
@@ -205,15 +202,9 @@ def create_objective(sim_space: optplan.SimulationSpace
 
         power = optplan.abs(overlap)**2
         power_objs.append(power)
-        monitor_list.append(
-            optplan.SimpleMonitor(name="power{}".format(wlen), function=power))
+        monitor_list.append(optplan.SimpleMonitor(name=f"power{wlen}", function=power))
 
-    # Spins minimizes the objective function, so to make `power` maximized,
-    # we minimize `1 - power`.
-    obj = 0
-    for power in power_objs:
-        obj += (1 - power)**2
-
+    obj = sum((1 - power)**2 for power in power_objs)
     monitor_list.append(optplan.SimpleMonitor(name="objective", function=obj))
 
     return obj, monitor_list
@@ -266,7 +257,7 @@ def create_transformations(
     for stage in range(num_stages):
         trans_list.append(
             optplan.Transformation(
-                name="opt_cont{}".format(stage),
+                name=f"opt_cont{stage}",
                 parametrization=param,
                 transformation=optplan.ScipyOptimizerTransformation(
                     optimizer="L-BFGS-B",
@@ -274,23 +265,26 @@ def create_transformations(
                     monitor_lists=optplan.ScipyOptimizerMonitorList(
                         callback_monitors=monitors,
                         start_monitors=monitors,
-                        end_monitors=monitors),
+                        end_monitors=monitors,
+                    ),
                     optimization_options=optplan.ScipyOptimizerOptions(
-                        maxiter=iters),
+                        maxiter=iters
+                    ),
                 ),
-            ))
+            )
+        )
 
         if stage < num_stages - 1:
             # Make the structure more discrete.
             trans_list.append(
                 optplan.Transformation(
-                    name="sigmoid_change{}".format(stage),
+                    name=f"sigmoid_change{stage}",
                     parametrization=param,
-                    # The larger the sigmoid strength value, the more "discrete"
-                    # structure will be.
                     transformation=optplan.CubicParamSigmoidStrength(
-                        value=4 * (stage + 1)),
-                ))
+                        value=4 * (stage + 1)
+                    ),
+                )
+            )
     return trans_list
 
 

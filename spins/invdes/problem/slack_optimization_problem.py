@@ -35,15 +35,15 @@ class SlackOptimizationProblem(OptimizationProblem):
         """
         cons_ineq = opt.get_inequality_constraints()
         self.num_slack = len(cons_ineq)
-        cons_eq = []
-        # Perform shallow copy of equality constraints.
-        for eq in opt.get_equality_constraints():
-            cons_eq.append(SlackRemover(eq, self.num_slack))
+        cons_eq = [
+            SlackRemover(eq, self.num_slack)
+            for eq in opt.get_equality_constraints()
+        ]
         # Convert inequality constraints into equalities.
-        for i, ineq in enumerate(cons_ineq):
-            cons_eq.append(
-                SlackRemover(ineq, self.num_slack) +
-                SlackVariable(self.num_slack, i))
+        cons_eq.extend(
+            SlackRemover(ineq, self.num_slack) + SlackVariable(self.num_slack, i)
+            for i, ineq in enumerate(cons_ineq)
+        )
         super().__init__(
             SlackRemover(opt.get_objective(), self.num_slack), cons_eq=cons_eq)
 

@@ -224,15 +224,14 @@ class SimOutputImpl:
         pass
 
     def eval(self, sim: FdfdSimProp) -> goos.Flow:
-        raise NotImplemented("{} cannot be evaluated.".format(type(self)))
+        raise NotImplemented(f"{type(self)} cannot be evaluated.")
 
     def before_adjoint_sim(self, adjoint_sim: FdfdSimProp,
                            grad_val: goos.Flow.Grad) -> None:
         # If an implementation is not provided, then the gradient must be
         # `None` to indicate that the gradient is not needed.
         if grad_val:
-            raise NotImplemented(
-                "Cannot differentiate with respect to {}".format(type(self)))
+            raise NotImplemented(f"Cannot differentiate with respect to {type(self)}")
 
 
 @goos.polymorphic_model()
@@ -589,20 +588,19 @@ def _create_solver(solver_name: str, solver_info: Optional[Solver],
     if solver_info:
         solver = maxwell.SIM_REGISTRY.get(solver_info.type).creator(
             solver_info, dims)
+    elif solver_name == "local_direct":
+        solver = DIRECT_SOLVER
+    elif solver_name == "maxwell_bicgstab":
+        from spins.fdfd_solvers.maxwell import MaxwellSolver
+        solver = MaxwellSolver(dims, solver="biCGSTAB")
+    elif solver_name == "maxwell_cg":
+        from spins.fdfd_solvers.maxwell import MaxwellSolver
+        solver = MaxwellSolver(dims, solver="CG")
+    elif solver_name == "maxwell_eig":
+        from spins.fdfd_solvers.maxwell import MaxwellSolver
+        solver = MaxwellSolver(dims, solver="Jacobi-Davidson")
     else:
-        if solver_name == "maxwell_cg":
-            from spins.fdfd_solvers.maxwell import MaxwellSolver
-            solver = MaxwellSolver(dims, solver="CG")
-        elif solver_name == "maxwell_bicgstab":
-            from spins.fdfd_solvers.maxwell import MaxwellSolver
-            solver = MaxwellSolver(dims, solver="biCGSTAB")
-        elif solver_name == "maxwell_eig":
-            from spins.fdfd_solvers.maxwell import MaxwellSolver
-            solver = MaxwellSolver(dims, solver="Jacobi-Davidson")
-        elif solver_name == "local_direct":
-            solver = DIRECT_SOLVER
-        else:
-            raise ValueError("Unknown solver, got {}".format(solver_name))
+        raise ValueError(f"Unknown solver, got {solver_name}")
 
     return solver
 
@@ -612,7 +610,7 @@ def _create_outputs(outputs: List[SimOutput]) -> List[SimOutputImpl]:
     for out in outputs:
         cls = maxwell.SIM_REGISTRY.get(out.type)
         if cls is None:
-            raise ValueError("Unsupported output type, got {}".format(out.type))
+            raise ValueError(f"Unsupported output type, got {out.type}")
         output_impls.append(cls.creator(out))
     return output_impls
 
@@ -622,7 +620,7 @@ def _create_sources(sources: List[SimSource]) -> List[SimSourceImpl]:
     for src in sources:
         cls = maxwell.SIM_REGISTRY.get(src.type)
         if cls is None:
-            raise ValueError("Unsupported output type, got {}".format(src.type))
+            raise ValueError(f"Unsupported output type, got {src.type}")
         source_impls.append(cls.creator(src))
     return source_impls
 
@@ -644,10 +642,7 @@ def fdfd_simulation(wavelength: float,
                        wavelength=wavelength,
                        simulation_space=simulation_space,
                        **kwargs)
-    if return_eps:
-        return sim, eps
-    else:
-        return sim
+    return (sim, eps) if return_eps else sim
 
 
 @dataclasses.dataclass
@@ -704,18 +699,15 @@ class SimulateEigNode(goos.ArrayFlowOpMixin, goos.ProblemGraphNode):
             self._solver = _create_solver(solver, None, self._grid.shape)
         else:
             raise ValueError(
-                "Invalid solver, solver for eigensolves need to be in " +
-                str(eigen_solvers) + ".")
+                f"Invalid solver, solver for eigensolves need to be in {eigen_solvers}."
+            )
         self._simspace = simulation_space
-        if bloch_vector:
-            self._bloch_vector = bloch_vector
-        else:
-            self._bloch_vector = np.array([0, 0, 0])
-        self._wlen = wavelength  #this will be used for the initial guess
+        self._bloch_vector = bloch_vector or np.array([0, 0, 0])
         self._pml_layers = [
             int(length / self._simspace.mesh.dx)
             for length in self._simspace.pml_thickness
         ]
+        self._wlen = wavelength
         self._symmetry = simulation_space.reflection_symmetry
 
         self._sources = _create_sources(sources)
@@ -847,10 +839,7 @@ def eig_simulation(wavelength: float,
                           simulation_space=simulation_space,
                           bloch_vector=bloch_vector,
                           **kwargs)
-    if get_eps:
-        return sim, eps
-    else:
-        return sim
+    return (sim, eps) if get_eps else sim
 
 
 @goos.polymorphic_model()

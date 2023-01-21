@@ -87,9 +87,7 @@ def eval_fun(
     _eval_fun_vals(fun_vals, fun_map, graph, top_sorted_nodes, param)
 
     ret_vals = [fun_vals[out_node] for out_node in out_nodes]
-    if single_output:
-        return ret_vals[0]
-    return ret_vals
+    return ret_vals[0] if single_output else ret_vals
 
 
 def _eval_fun_vals(fun_vals: Dict[NodeId, np.ndarray], fun_map: FunctionMap,
@@ -256,11 +254,7 @@ def eval_grad(fun: "OptimizationFunction",
         node = next(node_iter)
 
         while True:
-            while True:
-                # Postpone any heavy computation.
-                if _is_heavy_fun(fun_map[node]):
-                    break
-
+            while True and not _is_heavy_fun(fun_map[node]):
                 if _is_old_fun(fun_map[node]):
                     old_grad = fun_map[node].calculate_gradient(param)
                     # Use `np.dot` since either operand could be a scalar
@@ -349,7 +343,7 @@ def _create_computational_graph(
     # To identify functions, we use `id`, which is guaranteed to be unique for
     # two different objects (for CPython, this is simply the memory address).
     out_nodes = [id(fun) for fun in fun_list]
-    fun_map = {node: fun for node, fun in zip(out_nodes, fun_list)}
+    fun_map = dict(zip(out_nodes, fun_list))
 
     # Set of functions that do not have inputs.
     in_nodes = set()
@@ -384,7 +378,7 @@ def _create_computational_graph(
 
             graph[node].append(next_fun_id)
 
-            if next_fun_id in fun_map.keys():
+            if next_fun_id in fun_map:
                 continue
 
             fun_map[next_fun_id] = next_fun

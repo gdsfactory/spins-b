@@ -62,8 +62,8 @@ class NodeSchema(optplan.Model):
         # Validate the name.
         if self.name.startswith("__"):
             raise ValueError(
-                "Name cannot start with two underscores (__), got {}".format(
-                    self.name))
+                f"Name cannot start with two underscores (__), got {self.name}"
+            )
 
         # Verify that reference fields have been appropriately set. This is
         # actually a redundant check since `optplan.loads` and `optplan.dumps`
@@ -96,8 +96,9 @@ class NodeSchema(optplan.Model):
                 elif isinstance(field_value, optplan.WildcardSchema):
                     continue
 
-                raise ValueError("Expected type {} for field {}, got {}".format(
-                    field_type.reference_type, field_name, type(field_value)))
+                raise ValueError(
+                    f"Expected type {field_type.reference_type} for field {field_name}, got {type(field_value)}"
+                )
 
 
 class ProblemGraphNodeSchema(NodeSchema):
@@ -146,8 +147,8 @@ class OptplanPolyModelType(optplan.types.CompoundType):
 
         if not issubclass(model_class, self._node_meta_type):
             raise ValueError(
-                "Unknown node, got node type '{}' with metatype '{}'".format(
-                    value["type"], self._node_meta_type))
+                f"""Unknown node, got node type '{value["type"]}' with metatype '{self._node_meta_type}'"""
+            )
 
         return model_class(value, context=context)
 

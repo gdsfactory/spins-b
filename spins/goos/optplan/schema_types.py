@@ -21,11 +21,10 @@ class ComplexNumberType(types.BaseType):
         elif isinstance(value, list):
             if len(value) != 2:
                 raise ValueError(
-                    "Complex number primitive form must be a list of two"
-                    " elements, got {}".format(value))
+                    f"Complex number primitive form must be a list of two elements, got {value}"
+                )
             return value[0] + 1j * value[1]
-        raise ValueError(
-            "Could not convert to complex number, got {}".format(value))
+        raise ValueError(f"Could not convert to complex number, got {value}")
 
     def to_primitive(self, value, context=None):
         if not isinstance(value, complex):
@@ -41,9 +40,7 @@ class NumpyArrayType(types.BaseType):
     """
 
     def to_native(self, value, context=None):
-        if isinstance(value, np.ndarray):
-            return value
-        elif isinstance(value, numbers.Number):
+        if isinstance(value, (np.ndarray, numbers.Number)):
             return value
         elif isinstance(value, dict):
             return np.array(value["real"]) + 1j * np.array(value["imag"])

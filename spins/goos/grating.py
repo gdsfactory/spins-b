@@ -145,11 +145,9 @@ class PixelatedGrating(goos.Shape):
                                                        initial_value, levels)
 
     def eval(self, inputs: List[goos.NumericFlow]) -> goos.ShapeFlow:
-        if not self._use_edge_locs:
-            edge_locs = np.cumsum(inputs[0].array)
-        else:
-            edge_locs = inputs[0].array
-
+        edge_locs = (
+            inputs[0].array if self._use_edge_locs else np.cumsum(inputs[0].array)
+        )
         if self._use_grating_param:
             # TODO(logansu): Handle inverted flag.
             # We have to instantiate the parametrization every time because
@@ -197,12 +195,7 @@ class PixelatedGrating(goos.Shape):
         grad = np.array(
             grad.flatten(order="F")
             @ self._param.calculate_gradient()) / self._pixel_size[self._dir]
-        if not self._use_grating_param:
-            # Remove the first and last "artificial" edges (see `eval`).
-            grad = grad[1:-1]
-        else:
-            grad = grad[:-1]
-
+        grad = grad[:-1] if self._use_grating_param else grad[1:-1]
         if not self._use_edge_locs:
             grad = np.flip(np.cumsum(np.flip(grad)))
 
@@ -419,7 +412,7 @@ class MultiEtchEdgeParametrization(Parametrization):
 
     def get_level_vecs(self):
         # Separate out into edge parametrizations for each etch level.
-        level_vecs = [[] for i in range(len(self.etch_depths))]
+        level_vecs = [[] for _ in range(len(self.etch_depths))]
         last_level = len(level_vecs)
         for i in range(len(self.vector)):
             cur_level = int(self.levels[i])
@@ -442,11 +435,10 @@ class MultiEtchEdgeParametrization(Parametrization):
         partial_pixels = 0
         for i, raster_vec in enumerate(raster_vecs):
             pixels_left = layer_pixels[i]
-            if i != 0:
-                if np.abs(partial_pixels) > 0.001:
-                    total_z[:, z_ind] += raster_vec * (1 - partial_pixels)
-                    z_ind += 1
-                    pixels_left -= (1 - partial_pixels)
+            if i != 0 and np.abs(partial_pixels) > 0.001:
+                total_z[:, z_ind] += raster_vec * (1 - partial_pixels)
+                z_ind += 1
+                pixels_left -= (1 - partial_pixels)
             full_pixels = int(pixels_left)
             partial_pixels = pixels_left - full_pixels
             if full_pixels > 0:
@@ -495,10 +487,7 @@ class MultiEtchEdgeParametrization(Parametrization):
             'fun': lambda x: self.dims[0] - x,
             'jac': lambda x: -ident
         }
-        constraints = [
-            diff_constraint, lower_bound_constraint, upper_bound_constraint
-        ]
-        return constraints
+        return [diff_constraint, lower_bound_constraint, upper_bound_constraint]
 
     def calculate_gradient(self):
         # Brute force gradient computation.

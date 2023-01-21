@@ -140,8 +140,8 @@ class SimulationSpace:
                     ))
             else:
                 raise NotImplementedError(
-                    "Selection matrix type {} not yet implemented".format(
-                        self._selmat_type))
+                    f"Selection matrix type {self._selmat_type} not yet implemented"
+                )
 
             self._cache[wlen] = SimulationSpaceInstance(
                 eps_bg=eps_bg, selection_matrix=selection_mat)
@@ -185,12 +185,10 @@ def _create_edge_coords(sim_region: optplan.Box3d,
     xyz_min = np.array(sim_region.center) - np.array(sim_region.extents) / 2
     xyz_max = np.array(sim_region.center) + np.array(sim_region.extents) / 2
 
-    edge_coords = []
-    for i in range(3):
-        edge_coords.append(
-            np.arange(xyz_min[i] - dx / 2, xyz_max[i] + dx / 2, dx))
-
-    return edge_coords
+    return [
+        np.arange(xyz_min[i] - dx / 2, xyz_max[i] + dx / 2, dx)
+        for i in range(3)
+    ]
 
 
 def _create_grid(eps_spec: optplan.EpsilonSpec,
@@ -233,7 +231,8 @@ def _create_grid(eps_spec: optplan.EpsilonSpec,
         grid.render()
     else:
         raise NotImplementedError(
-            "Epsilon spec not implemented for type {}".format(eps_spec.type))
+            f"Epsilon spec not implemented for type {eps_spec.type}"
+        )
     # Return epsilon and dxes.
     return grid
 
@@ -281,7 +280,7 @@ def _draw_mesh_on_grid(mesh: optplan.Mesh,
                 thickness=thickness,
                 eps=eps_mat)
     else:
-        raise ValueError("Encountered unknown mesh type: {}".format(mesh.type))
+        raise ValueError(f"Encountered unknown mesh type: {mesh.type}")
 
 
 def _draw_gds_on_grid(gds_stack: List[optplan.GdsMaterialStackLayer],
@@ -368,13 +367,11 @@ def _get_mat_index(index_element: optplan.Material,
         # Check if full path already given.
         if os.path.isfile(fname):
             csv_file = fname
-        # Look for csv file in the material/csv_files directory.
         else:
             path_dir = os.path.dirname(inspect.getfile(material))
             csv_file = os.path.join(path_dir, "csv_files", fname)
             if not os.path.isfile(csv_file):
-                raise ValueError(
-                    "No csv file named %s or %s found." % (fname, csv_file))
+                raise ValueError(f"No csv file named {fname} or {csv_file} found.")
         index_data = pd.read_csv(csv_file, header=0)
         if "wl" not in index_data.columns:
             raise ValueError(

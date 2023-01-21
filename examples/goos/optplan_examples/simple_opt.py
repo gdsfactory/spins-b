@@ -27,8 +27,7 @@ def main(save_folder: str):
         # More efficient to call `eval_nodes` when evaluating multiple nodes
         # at the same time.
         x_val, y_val, obj_val = plan.eval_nodes([x, y, obj])
-        print("x: {}, y: {}, obj: {}".format(x_val.array, y_val.array,
-                                             obj_val.array))
+        print(f"x: {x_val.array}, y: {y_val.array}, obj: {obj_val.array}")
 
 
 if __name__ == "__main__":

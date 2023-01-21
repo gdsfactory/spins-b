@@ -82,10 +82,11 @@ def average_2xFarEdge(grid_size, design_bounds):
     Sz_flat = scipy.sparse.vstack((zero_padding_t, Sy_flat_preshift,
                                    zero_padding_b))
 
-    # Repmat to make a full 3D grid.
-    S = scipy.sparse.vstack([Sx_flat] * grid_size[2] +
-                            [Sy_flat] * grid_size[2] + [Sz_flat] * grid_size[2])
-    return S
+    return scipy.sparse.vstack(
+        [Sx_flat] * grid_size[2]
+        + [Sy_flat] * grid_size[2]
+        + [Sz_flat] * grid_size[2]
+    )
 
 
 def direct_lattice_deprecated(grid_size,
@@ -120,30 +121,34 @@ def direct_lattice_deprecated(grid_size,
     x_ind = x_ind.flatten(order='F')
     y_ind = y_ind.flatten(order='F')
 
-    num_gridxy = np.prod(grid_size[0:2])
+    num_gridxy = np.prod(grid_size[:2])
     num_design = np.prod(2 * design_area)
 
     mode = ['wrap', 'clip']
     # X-grid
-    map_x = np.ravel_multi_index([
-        design_bounds[0][0] + (x_ind + 1) // 2 - 1,
-        design_bounds[0][1] + y_ind // 2
-    ],
-                                 grid_size[0:2],
-                                 order='F',
-                                 mode=mode[wrap_or_clip[0]])
+    map_x = np.ravel_multi_index(
+        [
+            design_bounds[0][0] + (x_ind + 1) // 2 - 1,
+            design_bounds[0][1] + y_ind // 2,
+        ],
+        grid_size[:2],
+        order='F',
+        mode=mode[wrap_or_clip[0]],
+    )
     Sx_flat = scipy.sparse.csr_matrix(
         (np.ones(len(map_x)), (map_x, np.array(np.arange(len(map_x))))),
         shape=(num_gridxy, num_design))
 
     # Y-grid
-    map_y = np.ravel_multi_index([
-        design_bounds[0][0] + x_ind // 2,
-        design_bounds[0][1] + (y_ind + 1) // 2 - 1
-    ],
-                                 grid_size[0:2],
-                                 order='F',
-                                 mode=mode[wrap_or_clip[1]])
+    map_y = np.ravel_multi_index(
+        [
+            design_bounds[0][0] + x_ind // 2,
+            design_bounds[0][1] + (y_ind + 1) // 2 - 1,
+        ],
+        grid_size[:2],
+        order='F',
+        mode=mode[wrap_or_clip[1]],
+    )
     Sy_flat = scipy.sparse.csr_matrix(
         (np.ones(len(map_y)), (map_y, np.array(np.arange(len(map_y))))),
         shape=(num_gridxy, num_design))
@@ -151,9 +156,10 @@ def direct_lattice_deprecated(grid_size,
     # Z-grid
     map_z = np.ravel_multi_index(
         [design_bounds[0][0] + x_ind // 2, design_bounds[0][1] + y_ind // 2],
-        grid_size[0:2],
+        grid_size[:2],
         order='F',
-        mode=mode[wrap_or_clip[2]])
+        mode=mode[wrap_or_clip[2]],
+    )
     Sz_flat = scipy.sparse.csr_matrix(
         (np.ones(len(map_z)), (map_z, np.array(np.arange(len(map_z))))),
         shape=(num_gridxy, num_design))
@@ -176,10 +182,7 @@ def direct_lattice_deprecated(grid_size,
     Sz = scipy.sparse.vstack([Sz_flat] * grid_size[2])
 
     S = scipy.sparse.vstack((Sx, Sy, Sz))
-    if get_design_area:
-        return S, 2 * design_area
-    else:
-        return S
+    return (S, 2 * design_area) if get_design_area else S
 
 
 def calculate_design_bounds_yee(eps_bg: fdfd_tools.VecField,
@@ -316,7 +319,7 @@ def direct_lattice_to_yee_grid(shape):
         Transform matrix from direct lattice to yee grid.
     """
 
-    ind_yee = np.arange(np.prod(shape[0:2])).reshape(shape[0:2], order='F')
+    ind_yee = np.arange(np.prod(shape[:2])).reshape(shape[:2], order='F')
     ind_yee = np.array(
         [[v
           for v in val
@@ -325,11 +328,13 @@ def direct_lattice_to_yee_grid(shape):
          for _ in (0,
                    1)])  # This doubles every element in the x and y direction.
     ind_yee = np.stack(
-        [ind_yee + iz * np.prod(shape[0:2]) for iz in range(shape[2])], axis=2)
-    ind_yee_direct = np.arange(4 * np.prod(shape[0:2])).reshape(
-        2 * np.array(shape[0:2]), order='F')
+        [ind_yee + iz * np.prod(shape[:2]) for iz in range(shape[2])], axis=2
+    )
+    ind_yee_direct = np.arange(4 * np.prod(shape[:2])).reshape(
+        2 * np.array(shape[:2]), order='F'
+    )
     ind_yee_direct = np.stack(shape[2] * [ind_yee_direct], axis=2)
-    direct_size = 4 * np.prod(shape[0:2])
+    direct_size = 4 * np.prod(shape[:2])
 
     # x-grid
     ind_direct_shift = np.roll(
@@ -395,11 +400,13 @@ def direct_lattice(grid_shape, design_bounds, get_design_area: bool = False):
         indexing='ij')
     mapping = np.ravel_multi_index(
         (ind0.flatten(order='F'), ind1.flatten(order='F')),
-        dims=2 * np.array(grid_shape[0:2]),
-        order='F')
+        dims=2 * np.array(grid_shape[:2]),
+        order='F',
+    )
     struct2direct = scipy.sparse.csr_matrix(
         (np.ones(len(mapping)), (mapping, np.arange(len(mapping)))),
-        shape=(4 * np.prod(grid_shape[0:2]), np.prod(design_area)))
+        shape=(4 * np.prod(grid_shape[:2]), np.prod(design_area)),
+    )
 
     # Calculate the transformation from structure to yee.
     direct2yee = direct_lattice_to_yee_grid(grid_shape)
@@ -409,9 +416,7 @@ def direct_lattice(grid_shape, design_bounds, get_design_area: bool = False):
 
     struct2yee = direct2yee @ struct2direct
 
-    if get_design_area:
-        return struct2yee, design_area
-    return struct2yee
+    return (struct2yee, design_area) if get_design_area else struct2yee
 
 
 def create_selection_matrix(

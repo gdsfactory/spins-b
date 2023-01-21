@@ -176,11 +176,11 @@ class KwargsModelMixin:  # pylint: disable=too-few-public-methods
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
 
-            init_kwargs = {}
-            for key, value in kwargs.items():
-                if key not in self._schema.fields.keys():
-                    init_kwargs[key] = value
-
+            init_kwargs = {
+                key: value
+                for key, value in kwargs.items()
+                if key not in self._schema.fields.keys()
+            }
             super().__init__(*args, **init_kwargs)
             for key, item in kwargs.items():
                 if key in self._schema.fields.keys():

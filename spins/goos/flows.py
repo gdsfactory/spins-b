@@ -71,8 +71,9 @@ class FlowMeta(type):
             const_flag_fields = [(field.name, bool,
                                   dataclasses.field(default=False))
                                  for field in nonconst_fields]
-            cls.ConstFlags = dataclasses.make_dataclass(name + ".ConstFlags",
-                                                        const_flag_fields)
+            cls.ConstFlags = dataclasses.make_dataclass(
+                f"{name}.ConstFlags", const_flag_fields
+            )
 
             def __bool__(self) -> bool:
                 return all(
@@ -87,13 +88,15 @@ class FlowMeta(type):
 
         # Create the gradient class.
         if "Grad" not in cls.__dict__:
-            grad_fields = [(field.name + "_grad", field.type, np_zero_field(1))
-                           for field in nonconst_fields]
+            grad_fields = [
+                (f"{field.name}_grad", field.type, np_zero_field(1))
+                for field in nonconst_fields
+            ]
 
             grad_bases = tuple(cls_base.Grad for cls_base in bases)
-            cls.Grad = dataclasses.make_dataclass(name + ".Grad",
-                                                  grad_fields,
-                                                  bases=grad_bases)
+            cls.Grad = dataclasses.make_dataclass(
+                f"{name}.Grad", grad_fields, bases=grad_bases
+            )
 
             def __iadd__(self, value):
                 for field in grad_fields:
@@ -168,8 +171,7 @@ class Flow(metaclass=FlowMeta):
             return True
 
         if self.__class__ != other.__class__:
-            raise NotImplemented(
-                "Cannot compare flow types, got {} and {}".format(self, other))
+            raise NotImplemented(f"Cannot compare flow types, got {self} and {other}")
 
         for val1, val2 in zip(dataclasses.astuple(self),
                               dataclasses.astuple(other)):
@@ -204,9 +206,7 @@ class NumericFlow(Flow):
 
         def __eq__(self, value) -> bool:
             if type(self) == NumericFlow.Grad:
-                if isinstance(value, numbers.Number):
-                    return np.all(self.array_grad == value)
-                elif isinstance(value, np.ndarray):
+                if isinstance(value, (numbers.Number, np.ndarray)):
                     return np.all(self.array_grad == value)
                 elif type(value) == NumericFlow.Grad:
                     return np.all(self.array_grad == value.array_grad)
@@ -214,9 +214,7 @@ class NumericFlow(Flow):
 
     def __eq__(self, value) -> bool:
         if type(self) == NumericFlow:
-            if isinstance(value, numbers.Number):
-                return np.all(self.array == value)
-            elif isinstance(value, np.ndarray):
+            if isinstance(value, (numbers.Number, np.ndarray)):
                 return np.all(self.array == value)
             elif type(value) == NumericFlow:
                 return np.all(self.array == value.array)

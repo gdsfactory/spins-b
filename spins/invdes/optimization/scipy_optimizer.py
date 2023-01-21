@@ -41,10 +41,9 @@ class ScipyOptimizer:
         self.tol = tol
 
         # Spins places tols in options, tol saved in self.tol and removed from self.options
-        if options:
-            if "tol" in options.keys():
-                self.tol = options["tol"]
-                del self.options["tol"]
+        if options and "tol" in options.keys():
+            self.tol = options["tol"]
+            del self.options["tol"]
 
     def __call__(self, opt, param, callback=None):
         if isinstance(opt, OptimizationFunction):

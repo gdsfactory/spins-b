@@ -137,8 +137,7 @@ def create_old_param(
     elif type(param) == optplan.BicubicLevelSetParametrization:
         return create_bicubic_levelset_param(param, extents, pixel_size)
     else:
-        raise ValueError("Cannot create parametrization for type {}".format(
-            type(param)))
+        raise ValueError(f"Cannot create parametrization for type {type(param)}")
 
 
 def create_spins_param(params: Union[optplan.CubicParametrization,
@@ -220,8 +219,7 @@ def create_spins_param(params: Union[optplan.CubicParametrization,
     elif params.type == "parametrization.cubic":
         param_class = parametrization.CubicParam
     else:
-        raise ValueError("Unexpected parametrization type, got {}".format(
-            params.type))
+        raise ValueError(f"Unexpected parametrization type, got {params.type}")
 
     return param_class(initial_value=init_val,
                        coarse_x=coarse_x,

@@ -24,11 +24,7 @@ def axisvec2polarity(vector: np.ndarray) -> int:
          The polarity of the vector, which is either 1 (for positive direction)
          and -1 (for negative direction).
     """
-    if isinstance(vector, List):
-        vec = np.array(vector)
-    else:
-        vec = vector
-
+    vec = np.array(vector) if isinstance(vector, List) else vector
     axis = axisvec2axis(vec)
 
     return np.sign(vec[axis])
@@ -46,19 +42,12 @@ def axisvec2axis(vector: np.ndarray) -> int:
      Raises:
          ValueError: If the vector is not axis-aligned.
     """
-    if isinstance(vector, List):
-        vec = np.array(vector)
-    else:
-        vec = vector
-
+    vec = np.array(vector) if isinstance(vector, List) else vector
     norm = np.linalg.norm(vec)
     delta = 1e-6 * norm
 
     # Check that only one element of vector is larger than delta.
     if sum(abs(vec) > delta) != 1:
-        raise ValueError(
-            "Vector has no valid primary coordinate axis, got: {}".format(vec))
+        raise ValueError(f"Vector has no valid primary coordinate axis, got: {vec}")
 
-    axis = np.argwhere(abs(vec) > delta).flatten()[0]
-
-    return axis
+    return np.argwhere(abs(vec) > delta).flatten()[0]

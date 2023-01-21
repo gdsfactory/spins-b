@@ -95,13 +95,11 @@ def solve_waveguide_mode_2d(mode_number: int,
         wavenumber -= 2 * np.sin(np.real(wavenumber / 2)) - np.real(wavenumber)
 
     shape = [d.size for d in dxes[0]]
-    fields = {
+    return {
         'wavenumber': wavenumber,
         'E': unvec(e, shape),
         'H': unvec(h, shape),
     }
-
-    return fields
 
 
 def solve_waveguide_mode(mode_number: int,
@@ -177,13 +175,11 @@ def solve_waveguide_mode(mode_number: int,
         E[a][slices] = fields_2d['E'][o][:, :, None].transpose(reverse_order)
         H[a][slices] = fields_2d['H'][o][:, :, None].transpose(reverse_order)
 
-    results = {
+    return {
         'wavenumber': fields_2d['wavenumber'],
         'H': H,
         'E': E,
     }
-
-    return results
 
 
 def compute_source(E: field_t,
@@ -219,7 +215,7 @@ def compute_source(E: field_t,
     M = [None]*3
 
     src_order = np.roll(range(3), -axis)
-    exp_iphi = np.exp(1j * polarity * wavenumber * dxes[1][int(axis)][slices[int(axis)]])
+    exp_iphi = np.exp(1j * polarity * wavenumber * dxes[1][axis][slices[axis]])
     J[src_order[0]] = np.zeros_like(E[0])
     J[src_order[1]] = +exp_iphi * H[src_order[2]] * polarity
     J[src_order[2]] = -exp_iphi * H[src_order[1]] * polarity
@@ -234,7 +230,7 @@ def compute_source(E: field_t,
     for k in range(3):
         J[k] += Jm_iw[k] / (-1j * omega)
 
-    return J / dxes[1][int(axis)][slices[int(axis)]]
+    return J / dxes[1][axis][slices[axis]]
 
 
 def compute_overlap_e(E: field_t,
@@ -292,7 +288,7 @@ def compute_overlap_e(E: field_t,
 
     npts = E[0].size
     dn = np.zeros(npts * 3, dtype=int)
-    dn[0:npts] = 1
+    dn[:npts] = 1
     dn = np.roll(dn, npts * axis)
 
     e2h = operators.e2h(omega, dxes, mu)

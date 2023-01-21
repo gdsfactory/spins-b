@@ -111,19 +111,21 @@ def generate_wdm_2d():
             sim_mons.append(
                 plan.FieldMonitor(
                     function=sim,
-                    name=opt_stage + "_" + name + "_mon",
+                    name=f"{opt_stage}_{name}_mon",
                     center=[0, 0, 0],
                     normal=[0, 0, 1],
-                ))
+                )
+            )
         eps_mons = []
         for eps, name in zip([eps1550, eps1300], ["eps1550", "eps1300"]):
             eps_mons.append(
                 plan.FieldMonitor(
                     function=eps,
-                    name=opt_stage + "_" + name + "_mon",
+                    name=f"{opt_stage}_{name}_mon",
                     center=[0, 0, 0],
                     normal=[0, 0, 1],
-                ))
+                )
+            )
 
         def powercomp(overlap: plan.Overlap, target: float):
             return plan.PowerComp(
@@ -144,7 +146,9 @@ def generate_wdm_2d():
             ["sim1550_top", "sim1550_bot", "sim1300_top", "sim1300_bot"]):
             overlap_mons.append(
                 plan.SimpleMonitor(
-                    name=opt_stage + "_" + name + "_mon", function=overlap))
+                    name=f"{opt_stage}_{name}_mon", function=overlap
+                )
+            )
 
         return (plan.Sum(functions=[
             powercomp(over, val) for over, val in zip(overlaps, [1, 0, 0, 1])

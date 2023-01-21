@@ -276,15 +276,6 @@ class TestSum(unittest.TestCase):
 
     def test_matrix(self):
         """ Test sum calculation for matrix multiplication. """
-        # TODO(logansu): Enable test.
-        if False:
-            # Sum 1x1 variable against 2x1 constant.
-            param = DirectParam([1, 2])
-            obj = objective.Sum([ValueSlice(1), Constant(np.array([1, 2]))])
-            np.testing.assert_array_equal(
-                obj.calculate_objective_function(param), [2, 4])
-            np.testing.assert_array_equal(
-                obj.calculate_gradient(param), [[0, 2], [0, 4]])
 
     def test_weighted_sum(self):
         param = DirectParam([1, 2, 3])
@@ -380,15 +371,6 @@ class TestProduct(unittest.TestCase):
 
     def test_matrix(self):
         """ Test product calculation for matrix multiplication. """
-        # TODO(logansu): Enable test.
-        # Multiply 1x1 variable against 2x1 constant.
-        if False:
-            param = DirectParam([1, 2])
-            obj = objective.Product([ValueSlice(1), Constant(np.array([1, 2]))])
-            np.testing.assert_array_equal(
-                obj.calculate_objective_function(param), [2, 4])
-            np.testing.assert_array_equal(
-                obj.calculate_gradient(param), [[0, 2], [0, 4]])
 
     def test_string(self):
         obj = objective.Product(
@@ -938,7 +920,7 @@ class TestOperatorComposition(unittest.TestCase):
             return self.value
 
         def __str__(self):
-            return 'dummy(' + str(self.value) + ')'
+            return f'dummy({str(self.value)})'
 
     def test_sum(self):
         # Test that sum operation works as intended.

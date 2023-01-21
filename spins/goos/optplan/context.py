@@ -19,14 +19,11 @@ class Context:
 
     def register_node(self, node_name: str, schema, creator: Callable):
         if node_name in self._node_map:
-            raise ValueError(
-                "Node with name {} already registered.".format(node_name))
+            raise ValueError(f"Node with name {node_name} already registered.")
         self._node_map[node_name] = ContextEntry(schema, creator)
 
     def get_node(self, node_name: str):
-        if node_name in self._node_map:
-            return self._node_map[node_name]
-        return None
+        return self._node_map[node_name] if node_name in self._node_map else None
 
     def get_node_map(self) -> Dict:
         return self._node_map
@@ -50,13 +47,12 @@ class ContextStack:
 
     def get_node(self, node_name: str):
         for context in reversed(self._stack):
-            node = context.get_node(node_name)
-            if node:
+            if node := context.get_node(node_name):
                 return node
-        raise ValueError("Cannot find node {}".format(node_name))
+        raise ValueError(f"Cannot find node {node_name}")
 
     def get_node_map(self) -> Dict:
         node_map = {}
         for context in self._stack:
-            node_map.update(context.get_node_map())
+            node_map |= context.get_node_map()
         return node_map

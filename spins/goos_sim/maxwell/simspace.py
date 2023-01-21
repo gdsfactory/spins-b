@@ -86,22 +86,18 @@ def create_edge_coords(
     # Give warning and modify simulation extent, if it will produce an odd dxes
     # length in a symmetric axis
     for i, ext in enumerate(extents):
-        if reflection_symmetry[i]:
-            if not (ext / (2 * dx)).is_integer():
-                extents[i] = np.floor(ext / (2 * dx)) * 2 * dx
-                logger.warning(
-                    "Symmetry requires simulation extents to be an integer "
-                    "multiple of `2 * dx`, the simulation extents for {} "
-                    "direction has been changed to {}".format(
-                        "xyz"[i], extents[i]))
+        if reflection_symmetry[i] and not (ext / (2 * dx)).is_integer():
+            extents[i] = np.floor(ext / (2 * dx)) * 2 * dx
+            logger.warning(
+                f'Symmetry requires simulation extents to be an integer multiple of `2 * dx`, the simulation extents for {"xyz"[i]} direction has been changed to {extents[i]}'
+            )
 
     xyz_min = np.array(sim_region.center) - np.array(extents) / 2
     xyz_max = np.array(sim_region.center) + np.array(extents) / 2
 
-    edge_coords = []
-    for i in range(3):
-        edge_coords.append(np.arange(xyz_min[i], xyz_max[i] + dx / 2, dx))
-
+    edge_coords = [
+        np.arange(xyz_min[i], xyz_max[i] + dx / 2, dx) for i in range(3)
+    ]
     # Recenter around the center.
     edge_coords = [
         e - (e[0] + e[-1]) / 2 + c

@@ -80,7 +80,7 @@ class PowerTransmissionFunction(problem.OptimizationFunction):
 
         # Create a filter that sets a 1 in every position that is included in
         # the computation of the Poynting vector.
-        filter_grid = [np.zeros(simspace.dims) for i in range(3)]
+        filter_grid = [np.zeros(simspace.dims) for _ in range(3)]
         filter_grid[self._axis][tuple(self._plane_slice)] = 1
         self._filter_vec = fdfd_tools.vec(filter_grid)
 

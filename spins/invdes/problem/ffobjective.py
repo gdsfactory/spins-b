@@ -95,29 +95,19 @@ class DirectedPower(EmObjective):
         self.FarField = np.ones(3 * n_points)
 
     def calculate_partial_df_dx(self, x, z):
-        if self.E_background is not None:
-            E = x - E_background
-        else:
-            E = x
-
+        E = x - E_background if self.E_background is not None else x
         self.FarField = self.FF_projection_matrix @ E
-        ddirected_power_viol_dx = 0.5 * self.directed_power_vector @ \
-                                  scipy.sparse.diags(np.conj(self.FarField)) @ \
-                                  self.FF_projection_matrix
-
-        return ddirected_power_viol_dx
+        return (
+            0.5
+            * self.directed_power_vector
+            @ scipy.sparse.diags(np.conj(self.FarField))
+            @ self.FF_projection_matrix
+        )
 
     def calculate_f(self, x, z):
-        if self.E_background is not None:
-            E = x - E_background
-        else:
-            E = x
-
+        E = x - E_background if self.E_background is not None else x
         self.FarField = self.FF_projection_matrix @ x
-        directed_power = 0.5 * self.directed_power_vector @ np.abs(
-            self.FarField)**2
-
-        return directed_power
+        return 0.5 * self.directed_power_vector @ np.abs(self.FarField) ** 2
 
     def get_electric_fields(self, param: Parametrization):
         # TODO(logansu): Refactor please
@@ -194,16 +184,12 @@ class BasicScatter(EmObjective):
         self.FarField = np.ones(3 * n_p)
 
     def calculate_partial_df_dx(self, x, z):
-        if self.E_background is not None:
-            E = x - E_background
-        else:
-            E = x
-
+        E = x - E_background if self.E_background is not None else x
         #calculate far field
         FF_mat = self.FF_projection_matrix
         FarField = FF_mat @ E
         dFarField_square_viol_dx = scipy.sparse.diags(np.conj(FarField)) @ \
-                                    FF_mat
+                                        FF_mat
         #calculate total and directed scattered power
         n_points = self.points.size
         sum_matrix = scipy.sparse.hstack([
@@ -214,29 +200,24 @@ class BasicScatter(EmObjective):
         scattered_power = self.scattered_power_vector @ np.abs(FarField)**2
         directed_power = self.directed_power_vector @ np.abs(FarField)**2
         dscattered_power_viol_dx = self.scattered_power_vector @ \
-                                    dFarField_square_viol_dx
+                                        dFarField_square_viol_dx
         ddirected_power_viol_dx = self.directed_power_vector @ \
-                                    dFarField_square_viol_dx
+                                        dFarField_square_viol_dx
         #calculate directivity
         directivity = directed_power / scattered_power
         ddirectivity_viol_dx = ( ddirected_power_viol_dx*scattered_power - \
-                                 directed_power*dscattered_power_viol_dx)/  \
-                                 scattered_power**2
+                                     directed_power*dscattered_power_viol_dx)/  \
+                                     scattered_power**2
 
         #objection function
         alpha = self.objective_alpha
         f0 = (directivity < alpha) * (alpha - directivity)
         df0_viol_dx = (directivity < alpha) * (-1) * ddirectivity_viol_dx
-        df_viol_dx = self.pf * f0**(self.pf - 1) * df0_viol_dx
-
-        return df_viol_dx
+        return self.pf * f0**(self.pf - 1) * df0_viol_dx
 
     def calculate_f(self, x, z):
         #Test for background
-        if self.E_background is not None:
-            E = x - E_background
-        else:
-            E = x
+        E = x - E_background if self.E_background is not None else x
         #calculate far field
         self.FarField = self.FF_projection_matrix @ E
 
@@ -250,9 +231,7 @@ class BasicScatter(EmObjective):
         #objection function
         alpha = self.objective_alpha
         f0 = (self.directivity < alpha) * (alpha - self.directivity)
-        f = np.sum(f0**self.pf)
-
-        return f
+        return np.sum(f0**self.pf)
 
     def get_electric_fields(self, param: Parametrization):
         # TODO(logansu): Refactor please

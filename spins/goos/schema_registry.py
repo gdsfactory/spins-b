@@ -25,14 +25,11 @@ class SchemaRegistry:
                  creator: Callable,
                  metadata: Dict = None):
         if name in self._node_map:
-            raise ValueError(
-                "Node with name {} already registered.".format(name))
+            raise ValueError(f"Node with name {name} already registered.")
         self._node_map[name] = SchemaEntry(schema, creator, metadata)
 
     def get(self, node_name: str):
-        if node_name in self._node_map:
-            return self._node_map[node_name]
-        return None
+        return self._node_map[node_name] if node_name in self._node_map else None
 
     def get_map(self) -> collections.OrderedDict:
         return self._node_map
@@ -55,10 +52,9 @@ class SchemaRegistryStack:
 
     def get(self, node_name: str):
         for context in reversed(self._stack):
-            node = context.get(node_name)
-            if node:
+            if node := context.get(node_name):
                 return node
-        raise ValueError("Cannot find node {}".format(node_name))
+        raise ValueError(f"Cannot find node {node_name}")
 
     def get_map(self) -> collections.OrderedDict:
         node_map = collections.OrderedDict()

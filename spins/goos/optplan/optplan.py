@@ -22,12 +22,11 @@ class ProblemGraphNodeMeta(type):
 
         # Check that the node has a name.
         if not hasattr(cls, "node_type"):
-            raise ValueError(
-                "Problem graph node {} did not define `node_type`.".format(cls))
+            raise ValueError(f"Problem graph node {cls} did not define `node_type`.")
 
         # `ProblemGraphNode` has special implementation. Do not treat as normal
         # node.
-        if cls.node_type == "goos.problem_graph_node" or cls.node_type == "goos.action":
+        if cls.node_type in ["goos.problem_graph_node", "goos.action"]:
             return cls
 
         # Validate that the constructor arguments are valid.
@@ -42,32 +41,21 @@ class ProblemGraphNodeMeta(type):
 
             # Parameters should have type annotation.
             if param.annotation == param.empty:
-                raise TypeError("Parameter `{}` has no type annotation.".format(
-                    param.name))
-
-            # Default values need to be serializable.
-            if param.default != param.empty and False:
-                raise ValueError(
-                    "Parameter `{}` has unserializable default value,"
-                    " got {}".format(param.name, param.default))
+                raise TypeError(f"Parameter `{param.name}` has no type annotation.")
 
             # We cannot handle variational parameters.
-            if (param.kind == param.VAR_POSITIONAL or
-                    param.kind == param.VAR_KEYWORD):
-                raise TypeError("Problem graph node \"{}\" has a variational"
-                                " parameter.".format(cls.node_type))
+            if param.kind in [param.VAR_POSITIONAL, param.VAR_KEYWORD]:
+                raise TypeError(
+                    f'Problem graph node \"{cls.node_type}\" has a variational parameter.'
+                )
 
         # Create the schema class.
         # Check if a class called `Schema` is declared in the class itself
         # (as opposed to one of its parents).
         if "Schema" not in cls.__dict__:
-            # We need to construct a schema inheritance hierarchy that parallels
-            # the inheritance hierarchy in the actual nodes.
-            schema_base_classes = []
-            for base in bases:
-                if issubclass(base, ProblemGraphNode):
-                    schema_base_classes.append(base.Schema)
-
+            schema_base_classes = [
+                base.Schema for base in bases if issubclass(base, ProblemGraphNode)
+            ]
             # If the class explicitly defines `__init__`, then build up a schema
             # adding arguments from its constructor. Else, build a schema
             # for the sake of preserving hierarchy but do not add any fields.
@@ -87,11 +75,11 @@ class ProblemGraphNodeMeta(type):
                                                        cls.Schema, cls)
         return cls
 
-    def __call__(cls, *args, **kwargs):
+    def __call__(self, *args, **kwargs):
         # `ProblemGraphNode` has special implementation. Do not treat as normal
         # node.
-        if cls.node_type == "goos.problem_graph_node" or cls.node_type == "goos.action":
-            return super(ProblemGraphNodeMeta, cls).__call__(*args, **kwargs)
+        if self.node_type in ["goos.problem_graph_node", "goos.action"]:
+            return super(ProblemGraphNodeMeta, self).__call__(*args, **kwargs)
 
         if "name" in kwargs:
             node_name = kwargs["name"]
@@ -100,7 +88,7 @@ class ProblemGraphNodeMeta(type):
             node_name = None
 
         # Verify that all arguments are serializable and save argument values.
-        signature = inspect.signature(cls.__init__)
+        signature = inspect.signature(self.__init__)
         schema_data = {}
         # Index of the next signature parameter to check.
         # Start at 1 to ignore `self`.
@@ -112,30 +100,19 @@ class ProblemGraphNodeMeta(type):
             param_ind += 1
         # Parse out keyword arguments.
         for param in parameters[param_ind:]:
-            if param.name in kwargs:
-                schema_data[param.name] = kwargs[param.name]
-            else:
-                schema_data[param.name] = param.default
-
-        obj = super(ProblemGraphNodeMeta, cls).__call__(*args, **kwargs)
+            schema_data[param.name] = kwargs.get(param.name, param.default)
+        obj = super(ProblemGraphNodeMeta, self).__call__(*args, **kwargs)
 
         # Name the node and set the schema.
-        if node_name:
-            obj._goos_name = node_name
-        else:
-            obj._goos_name = optplan.schema.generate_name(cls.node_type)
-
+        obj._goos_name = node_name or optplan.schema.generate_name(self.node_type)
         # Allow the node to custom override the way the schema is set.
         if not hasattr(obj, "_goos_schema") or not obj._goos_schema:
             schema_data["name"] = obj._goos_name
             schema_data = _replace_node_with_schema(schema_data)
-            obj._goos_schema = cls.Schema(**schema_data)
+            obj._goos_schema = self.Schema(**schema_data)
         else:
             obj._goos_schema.name = obj._goos_name
-        # TODO(logansu): Validate the schema.
-
-        default_plan = get_default_plan()
-        if default_plan:
+        if default_plan := get_default_plan():
             default_plan.add_node(obj)
         return obj
 
@@ -342,15 +319,14 @@ class OptimizationPlan:
 
     def get_state_dict(self) -> Dict:
         """Creates a dictionary with the current state of the plan."""
-        # Setup variable data.
-        var_data = {}
-        for var_name, var_val in self._var_value.items():
-            var_data[var_name] = {
+        var_data = {
+            var_name: {
                 "value": var_val,
                 "frozen": self._var_frozen[var_name],
                 "bounds": self._var_bounds[var_name],
             }
-
+            for var_name, var_val in self._var_value.items()
+        }
         data = {
             "version": "0.2.0",
             "action_ptr": self._action_ptr,
@@ -412,19 +388,17 @@ class OptimizationPlan:
             if mon_val.ndim == 1:
                 mon_val = mon_val[0]
                 if np.isreal(mon_val):
-                    self._logger.info("Monitor {}: {}".format(
-                        mon_name, mon_val))
+                    self._logger.info(f"Monitor {mon_name}: {mon_val}")
                 else:
                     self._logger.info(
-                        "Monitor {}: {} (mag={}, phase={})".format(
-                            mon_name, mon_val, np.abs(mon_val),
-                            np.angle(mon_val)))
+                        f"Monitor {mon_name}: {mon_val} (mag={np.abs(mon_val)}, phase={np.angle(mon_val)})"
+                    )
 
         # Save the data.
         if self._save_path:
             file_path = os.path.join(
-                self._save_path,
-                os.path.join("step{}.pkl".format(self._log_counter)))
+                self._save_path, os.path.join(f"step{self._log_counter}.pkl")
+            )
             with open(file_path, "wb") as handle:
                 pickle.dump(data, handle)
             self._logger.info("Data saved to %s", file_path)
@@ -517,8 +491,8 @@ class OptimizationPlan:
                       check_frozen: bool = True) -> None:
         if check_frozen and self._var_frozen[node._goos_name]:
             raise ValueError(
-                "Attempting to set value of frozen variable {}".format(
-                    node._goos_name))
+                f"Attempting to set value of frozen variable {node._goos_name}"
+            )
         self._var_value[node._goos_name] = np.array(value)
 
     @_requires_action
@@ -558,14 +532,17 @@ class OptimizationPlan:
         """
         self._modifiable = True
         while self._action_ptr < len(self._actions):
-            self.logger.info("Running action {} ({}).".format(
-                self._action_ptr, self._actions[self._action_ptr]._goos_name))
+            self.logger.info(
+                f"Running action {self._action_ptr} ({self._actions[self._action_ptr]._goos_name})."
+            )
             self._actions[self._action_ptr].run(self)
 
             if auto_checkpoint and self._save_path:
                 self.write_checkpoint(
-                    os.path.join(self._save_path,
-                                 "action{}.chkpt".format(self._action_ptr)))
+                    os.path.join(
+                        self._save_path, f"action{self._action_ptr}.chkpt"
+                    )
+                )
 
             self._action_ptr += 1
             self._action_data = None
@@ -600,25 +577,27 @@ class OptimizationPlan:
 
         # Attempt to resume if there is event data to resume from.
         if self._action_data:
-            self.logger.info("Resuming action {} ({}).".format(
-                self._action_ptr, self._actions[self._action_ptr]._goos_name))
+            self.logger.info(
+                f"Resuming action {self._action_ptr} ({self._actions[self._action_ptr]._goos_name})."
+            )
 
             if hasattr(self._actions[self._action_ptr], "resume"):
                 self._actions[self._action_ptr].resume(self, self._action_data)
             else:
                 self.logger.warning(
-                    "Action has no resume capabilities {}, re-running.".format(
-                        self._action_ptr))
+                    f"Action has no resume capabilities {self._action_ptr}, re-running."
+                )
                 self._actions[self._action_ptr].run(self)
         else:
-            self.logger.info("Running action {} ({}).".format(
-                self._action_ptr, self._actions[self._action_ptr]._goos_name))
+            self.logger.info(
+                f"Running action {self._action_ptr} ({self._actions[self._action_ptr]._goos_name})."
+            )
             self._actions[self._action_ptr].run(self)
 
         if auto_checkpoint and self._save_path:
             self.write_checkpoint(
-                os.path.join(self._save_path,
-                             "action{}.chkpt".format(self._action_ptr)))
+                os.path.join(self._save_path, f"action{self._action_ptr}.chkpt")
+            )
 
         self._action_ptr += 1
         self._action_data = None
@@ -713,6 +692,4 @@ def pop_plan() -> OptimizationPlan:
 
 
 def get_default_plan() -> OptimizationPlan:
-    if optplan.GLOBAL_PLAN_STACK:
-        return optplan.GLOBAL_PLAN_STACK[-1]
-    return None
+    return optplan.GLOBAL_PLAN_STACK[-1] if optplan.GLOBAL_PLAN_STACK else None

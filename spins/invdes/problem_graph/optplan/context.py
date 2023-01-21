@@ -118,8 +118,8 @@ class OptplanContext:
         node_map = self._optplan_node_map.get(node_meta_type, {})
         if node_type in node_map:
             raise ValueError(
-                "Node type '{}' with metatype '{}' was registered twice.".
-                format(node_type, node_meta_type))
+                f"Node type '{node_type}' with metatype '{node_meta_type}' was registered twice."
+            )
         node_map[node_type] = (model, fun)
         self._optplan_node_map[node_meta_type] = node_map
 
@@ -157,9 +157,7 @@ class OptplanContextStack:
         Returns:
             The context at the top, or `None` if stack is empty.
         """
-        if self._stack:
-            return self._stack.pop()
-        return None
+        return self._stack.pop() if self._stack else None
 
     def peek(self) -> Optional[OptplanContext]:
         """Returns the context from the top of the stack without popping.
@@ -167,9 +165,7 @@ class OptplanContextStack:
         Returns:
             The context at the top, or `None` is stack is emptpy.
         """
-        if self._stack:
-            return self._stack[-1]
-        return None
+        return self._stack[-1] if self._stack else None
 
     def get_node_model(self, node_meta_type: str,
                        node_type: str) -> Optional[models.Model]:
@@ -187,8 +183,7 @@ class OptplanContextStack:
             model found.
         """
         for context in reversed(self._stack):
-            model = context.get_node_model(node_meta_type, node_type)
-            if model:
+            if model := context.get_node_model(node_meta_type, node_type):
                 return model
 
         return None
@@ -209,8 +204,7 @@ class OptplanContextStack:
             model found.
         """
         for context in reversed(self._stack):
-            model = context.get_node_creator(node_meta_type, node_type)
-            if model:
+            if model := context.get_node_creator(node_meta_type, node_type):
                 return model
 
         return None
@@ -229,6 +223,6 @@ class OptplanContextStack:
         """
         model_dict = {}
         for context in self._stack:
-            model_dict.update(context.get_node_model_dict(node_meta_type))
+            model_dict |= context.get_node_model_dict(node_meta_type)
 
         return model_dict

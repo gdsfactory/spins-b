@@ -141,9 +141,7 @@ class PlaneWaveSource:
                 bloch_vector=kvector,
             )
 
-        if self._params.overwrite_bloch_vector:
-            return source, kvector
-        return source
+        return (source, kvector) if self._params.overwrite_bloch_vector else source
 
 
 @optplan.register_node(optplan.GaussianSource)
@@ -428,7 +426,7 @@ class FdfdSimulation(problem.OptimizationFunction):
         return electric_fields
 
     def __str__(self):
-        return "Simulation({})".format(self._wlen)
+        return f"Simulation({self._wlen})"
 
 
 def _create_solver(solver_name: str, simspace: SimulationSpace) -> Callable:
@@ -441,16 +439,16 @@ def _create_solver(solver_name: str, simspace: SimulationSpace) -> Callable:
     Returns:
          A callable solver object.
     """
-    if solver_name == "maxwell_cg":
-        from spins.fdfd_solvers.maxwell import MaxwellSolver
-        solver = MaxwellSolver(simspace.dims, solver="CG")
+    if solver_name == "local_direct":
+        solver = DIRECT_SOLVER
     elif solver_name == "maxwell_bicgstab":
         from spins.fdfd_solvers.maxwell import MaxwellSolver
         solver = MaxwellSolver(simspace.dims, solver="biCGSTAB")
-    elif solver_name == "local_direct":
-        solver = DIRECT_SOLVER
+    elif solver_name == "maxwell_cg":
+        from spins.fdfd_solvers.maxwell import MaxwellSolver
+        solver = MaxwellSolver(simspace.dims, solver="CG")
     else:
-        raise ValueError("Unknown solver, got {}".format(solver_name))
+        raise ValueError(f"Unknown solver, got {solver_name}")
 
     return solver
 
@@ -539,7 +537,7 @@ class Epsilon(problem.OptimizationFunction):
         ]
 
     def __str__(self):
-        return "Epsilon({})".format(self._wlen)
+        return f"Epsilon({self._wlen})"
 
 
 @optplan.register_node(optplan.Epsilon)
@@ -625,7 +623,7 @@ class ImportOverlap:
             overlap_coords[2].size
         ])
         singleton_dims = np.where(coord_dims == 1)[0]
-        if not singleton_dims.size == 0:
+        if singleton_dims.size != 0:
             for axis in singleton_dims:
                 # The dx from the SPINS simulation grid is borrowed for the replication.
                 dx = dxyz[axis][0]
@@ -639,7 +637,7 @@ class ImportOverlap:
                     overlap[comp] = np.repeat(overlap[comp],
                                               overlap_coords[axis].size, axis)
 
-        for i in range(0, 3):
+        for i in range(3):
 
             # Interpolate the user-specified overlap fields for use on the simulation grids
             overlap_interp_function = RegularGridInterpolator(
@@ -709,7 +707,7 @@ class OverlapFunction(problem.OptimizationFunction):
         return [grad_val * self.overlap_vector]
 
     def __str__(self):
-        return "Overlap({})".format(self._input)
+        return f"Overlap({self._input})"
 
 
 @optplan.register_node(optplan.Overlap)

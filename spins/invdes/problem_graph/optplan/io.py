@@ -48,7 +48,7 @@ def generate_name(model_type: str) -> str:
     if model_type not in problem_graph_name_map:
         problem_graph_name_map[model_type] = 0
 
-    name = "{}.{}".format(model_type, problem_graph_name_map[model_type])
+    name = f"{model_type}.{problem_graph_name_map[model_type]}"
 
     problem_graph_name_map[model_type] += 1
 
@@ -152,18 +152,16 @@ def _iter_optplan_fields(
     # Wrap `process_field` so that returning `None` is same as returning the
     # child.
     def process_field_wrapped(
-            parent: models.Model,
-            child: Union[str, optplan.ProblemGraphNode],
-            field_type: optplan.ReferenceType,
-    ) -> optplan.ProblemGraphNode:
+                parent: models.Model,
+                child: Union[str, optplan.ProblemGraphNode],
+                field_type: optplan.ReferenceType,
+        ) -> optplan.ProblemGraphNode:
         if pass_field_info:
             return_val = process_field(parent, child, field_type)
         else:
             return_val = process_field(parent, child)
 
-        if return_val is None:
-            return child
-        return return_val
+        return child if return_val is None else return_val
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -238,8 +236,9 @@ def validate(plan: optplan.OptimizationPlan) -> None:
             node_name = node.name
             node.validate()
         except Exception as exc:
-            raise ValueError("Error encountered when validating node {}".format(
-                node_name)) from exc
+            raise ValueError(
+                f"Error encountered when validating node {node_name}"
+            ) from exc
 
     # Now validate the plan schema itself just in case we missed something
     # from the previous checks.
@@ -249,7 +248,7 @@ def validate(plan: optplan.OptimizationPlan) -> None:
     names = set()
     for node in plan.nodes:
         if node.name in names:
-            raise ValueError("Nonunique name found: {}".format(node.name))
+            raise ValueError(f"Nonunique name found: {node.name}")
         names.add(node.name)
 
 
@@ -287,8 +286,7 @@ def _validate_optplan_version(version: str) -> None:
     """
     version_parts = [int(part) for part in version.split(".")]
     if version_parts[0] < 0 or version_parts[1] < 2 or version_parts[2] < 3:
-        raise ValueError(
-            "Optplan must be at least version 0.2.1, got {}".format(version))
+        raise ValueError(f"Optplan must be at least version 0.2.1, got {version}")
 
 
 def loads(serialized_plan: str) -> optplan.OptimizationPlan:

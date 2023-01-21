@@ -219,16 +219,6 @@ class PixelatedContShapeFlow(ShapeFlow, goos.NumericFlow):
         """
         edge_coords = cls.get_relative_edge_coords(extents, pixel_size)
         return [(coord[:-1] + coord[1:]) / 2 for coord in edge_coords]
-        coords = []
-        for i in range(len(extents)):
-            coord = pixel_size[i] * np.arange(
-                0,
-                int(extents[i] / pixel_size[i]) + 1)
-            if coord[-1] >= extents[i]:
-                coords.append(coord[:-1])
-            else:
-                coords.append(coord)
-        return [coord - np.mean(coord) for coord in coords]
 
     def get_cell_coords(self) -> List[np.ndarray]:
         """Returns the absolute coordinates of the cells."""

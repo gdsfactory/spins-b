@@ -29,8 +29,9 @@ class GratingEdgeDiscretization:
         # Calculate in terms of pixels.
         self._min_feature = min_feature / dx
         if self._min_feature < 1:
-            raise ValueError("Minimum feature size must be larger than one "
-                             "grid spacing, got {}".format(min_feature))
+            raise ValueError(
+                f"Minimum feature size must be larger than one grid spacing, got {min_feature}"
+            )
 
         self._param = param
 
@@ -49,11 +50,7 @@ class GratingEdgeDiscretization:
         # To remedy, prepend a rising edge at the left boundary and append a
         # falling edge at the end, EXCEPT if there is already an edge
         # already there.
-        if edge_loc[0] == 0:
-            edge_loc = edge_loc[1:]
-        else:
-            edge_loc = [0] + edge_loc
-
+        edge_loc = edge_loc[1:] if edge_loc[0] == 0 else [0] + edge_loc
         grating_len = len(self._param.to_vector())
         if edge_loc[-1] == grating_len:
             edge_loc = edge_loc[:-1]
@@ -124,7 +121,7 @@ def _get_edge_loc_dp(x: List[float], min_feature: float = 0) -> np.ndarray:
 
     # min_feature size in terms of grid units.
     d = int(min_feature * divisions)
-    struct_dp = [[] for i in range(d)]
+    struct_dp = [[] for _ in range(d)]
 
     # k = this right edge
     dp[0] = 0
@@ -176,6 +173,4 @@ def _get_edge_loc_dp(x: List[float], min_feature: float = 0) -> np.ndarray:
                   func(x[k_int], 1 - k_frac) * (1 - k_frac))
 
     struct_best_ind = np.argmin(dp[d:]) + d
-    edge_loc = struct_dp[struct_best_ind]
-
-    return edge_loc
+    return struct_dp[struct_best_ind]

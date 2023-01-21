@@ -48,8 +48,9 @@ def create_grating_param(
     # Only one of the design areas is nonzero. Figure out which one.
     design_dims = work.get_object(params.simulation_space).design_dims
     if design_dims[0] > 1 and design_dims[1] > 1:
-        raise ValueError("Grating parametrization should have 1D design "
-                         "area, got {}".format(design_dims))
+        raise ValueError(
+            f"Grating parametrization should have 1D design area, got {design_dims}"
+        )
 
     grating_len = np.max(design_dims)
     return parametrization.GratingParam([],
@@ -128,8 +129,7 @@ def create_cubic_or_hermite_levelset(
     elif params.type == "parametrization.cubic":
         param_class = parametrization.CubicParam
     else:
-        raise ValueError("Unexpected parametrization type, got {}".format(
-            params.type))
+        raise ValueError(f"Unexpected parametrization type, got {params.type}")
 
     return param_class(initial_value=init_val,
                        coarse_x=coarse_x,
@@ -238,7 +238,7 @@ class FabricationPenalty(problem.OptimizationFunction):
         return gradient
 
     def __str__(self):
-        return 'FabCon(' + str(self.d_gap) + ')'
+        return f'FabCon({str(self.d_gap)})'
 
 
 @optplan.register_node(optplan.FabricationConstraint)

@@ -75,12 +75,7 @@ class LocalMatrixSolver:
 
         x = self.solve_matrix_equation(A.astype(np.complex128).tocsr(), b)
 
-        if adjoint:
-            x0 = Pl.H @ x
-        else:
-            x0 = Pr @ x
-
-        return x0
+        return Pl.H @ x if adjoint else Pr @ x
 
 
 def _worker_simulate(A, b, solver):

@@ -94,8 +94,7 @@ def e_full(omega: complex,
     else:
         m_div = sparse.diags(1 / mu)
 
-    op = pe @ (ch @ pm @ m_div @ ce - omega**2 * e) @ pe
-    return op
+    return pe @ (ch @ pm @ m_div @ ce - omega**2 * e) @ pe
 
 
 def e_full_preconditioners(
@@ -171,13 +170,8 @@ def h_full(omega: complex,
         pm = sparse.diags(np.where(pmc, 0, 1))  # Set pe to (not PMC)
 
     e_div = sparse.diags(1 / epsilon)
-    if mu is None:
-        m = sparse.eye(epsilon.size)
-    else:
-        m = sparse.diags(mu)
-
-    A = pm @ (ec @ pe @ e_div @ hc - omega**2 * m) @ pm
-    return A
+    m = sparse.eye(epsilon.size) if mu is None else sparse.diags(mu)
+    return pm @ (ec @ pe @ e_div @ hc - omega**2 * m) @ pm
 
 
 def eh_full(omega: complex,
@@ -234,8 +228,7 @@ def eh_full(omega: complex,
     A1 = pe @ curl_h(dxes, bloch_vec, shift_orthogonal) @ pm
     A2 = pm @ curl_e(dxes, bloch_vec, shift_orthogonal) @ pe
 
-    A = sparse.bmat([[-iwe, A1], [A2, iwm]])
-    return A
+    return sparse.bmat([[-iwe, A1], [A2, iwm]])
 
 
 def curl_h(dxes: dx_lists_t,
@@ -336,14 +329,9 @@ def h2e(omega: complex,
     if bloch_vec is None:
         bloch_vec = np.zeros(3)
 
-    op = sparse.diags(1 / (1j * omega * eps)) @ curl_h(dxes, bloch_vec,
-                                                       shift_orthogonal)
-
-    #TODO: implement pmc
-    #if not np.any(np.equal(pmc, None)):
-    #    op = sparse.diags(np.where(pmc, 0, 1)) @ op
-
-    return op
+    return sparse.diags(1 / (1j * omega * eps)) @ curl_h(
+        dxes, bloch_vec, shift_orthogonal
+    )
 
 
 def m2j(omega: complex,
@@ -438,9 +426,9 @@ def vec_cross(b: vfield_t) -> sparse.spmatrix:
     if len(b.shape) == 1:
         n = b.shape[0] // 3
         B = [
-            sparse.diags(b[0:n]),
-            sparse.diags(b[n:2 * n]),
-            sparse.diags(b[2 * n:3 * n])
+            sparse.diags(b[:n]),
+            sparse.diags(b[n : 2 * n]),
+            sparse.diags(b[2 * n : 3 * n]),
         ]
     elif b.shape[1] == 3:
         B = [sparse.diags(c) for c in np.split(b, 3)]
@@ -456,7 +444,7 @@ def avgf(axis: int, shape: List[int]) -> sparse.spmatrix:
     :return: Sparse matrix for forward average operation
     """
     if len(shape) not in (2, 3):
-        raise Exception('Invalid shape: {}'.format(shape))
+        raise Exception(f'Invalid shape: {shape}')
 
     n = np.prod(shape)
     return 0.5 * (sparse.eye(n) + rotation_bloch_shift(axis, shape, 1))
@@ -471,7 +459,7 @@ def avgb(axis: int, shape: List[int]) -> sparse.spmatrix:
     :return: Sparse matrix for backward average operation
     """
     if len(shape) not in (2, 3):
-        raise Exception('Invalid shape: {}'.format(shape))
+        raise Exception(f'Invalid shape: {shape}')
 
     n = np.prod(shape)
     return 0.5 * (sparse.eye(n) + rotation_bloch_shift(axis, shape, -1))
@@ -492,10 +480,9 @@ def rotation_bloch(axis: int,
     :return sparse matrix for performing the circular shift
     '''
     if len(shape) not in (2, 3):
-        raise Exception('Invalid shape: {}'.format(shape))
+        raise Exception(f'Invalid shape: {shape}')
     if axis not in range(len(shape)):
-        raise Exception('Invalid direction: {}, shape is {}'.format(
-            axis, shape))
+        raise Exception(f'Invalid direction: {axis}, shape is {shape}')
     if shift_distance not in (-1, 1):
         raise Exception('Shift must be in (-1,1)')
 
@@ -557,7 +544,7 @@ def deriv_forward(dx_e: List[np.ndarray],
 
     shape = [s.size for s in dx_e]
     n = np.prod(shape)
-    phase = [bloch_vec[n] * np.sum(dx_e[n]) for n in range(0, len(dx_e))]
+    phase = [bloch_vec[n] * np.sum(dx_e[n]) for n in range(len(dx_e))]
     dx_e_expanded = np.meshgrid(*dx_e, indexing='ij')
 
     def deriv(axis, phase):
@@ -586,7 +573,7 @@ def deriv_back(dx_h: List[np.ndarray],
 
     shape = [s.size for s in dx_h]
     n = np.prod(shape)
-    phase = [bloch_vec[n] * np.sum(dx_h[n]) for n in range(0, len(dx_h))]
+    phase = [bloch_vec[n] * np.sum(dx_h[n]) for n in range(len(dx_h))]
     dx_h_expanded = np.meshgrid(*dx_h, indexing='ij')
 
     def deriv(axis, phase):
@@ -649,9 +636,7 @@ def rotation_bloch_shift(axis: int,
         ind0, shape, mode='wrap', order='F').flatten(order='F')
     col_ind = np.ravel_multi_index(
         ind, shape, mode='wrap', order='F').flatten(order='F')
-    A = sparse.csr_matrix((data.flatten(order='F'), (row_ind, col_ind)))
-
-    return A
+    return sparse.csr_matrix((data.flatten(order='F'), (row_ind, col_ind)))
 
 
 def deriv_forward_shift(dx_e: List[np.ndarray],
@@ -761,10 +746,13 @@ def poynting_e_cross(e: vfield_t, dxes: dx_lists_t) -> sparse.spmatrix:
     n = np.prod(shape)
     zero = sparse.csr_matrix((n, n))
 
-    P = sparse.bmat([[zero, -fx @ Ez @ bz @ dbgy, fx @ Ey @ by @ dbgz],
-                     [fy @ Ez @ bz @ dbgx, zero, -fy @ Ex @ bx @ dbgz],
-                     [-fz @ Ey @ by @ dbgx, fz @ Ex @ bx @ dbgy, zero]])
-    return P
+    return sparse.bmat(
+        [
+            [zero, -fx @ Ez @ bz @ dbgy, fx @ Ey @ by @ dbgz],
+            [fy @ Ez @ bz @ dbgx, zero, -fy @ Ex @ bx @ dbgz],
+            [-fz @ Ey @ by @ dbgx, fz @ Ex @ bx @ dbgy, zero],
+        ]
+    )
 
 
 def poynting_h_cross(h: vfield_t, dxes: dx_lists_t) -> sparse.spmatrix:
@@ -793,10 +781,13 @@ def poynting_h_cross(h: vfield_t, dxes: dx_lists_t) -> sparse.spmatrix:
     n = np.prod(shape)
     zero = sparse.csr_matrix((n, n))
 
-    P = sparse.bmat([[zero, -by @ Hz @ fx @ dagy, bz @ Hy @ fx @ dagz],
-                     [bx @ Hz @ fy @ dagx, zero, -bz @ Hx @ fy @ dagz],
-                     [-bx @ Hy @ fz @ dagx, by @ Hx @ fz @ dagy, zero]])
-    return P
+    return sparse.bmat(
+        [
+            [zero, -by @ Hz @ fx @ dagy, bz @ Hy @ fx @ dagz],
+            [bx @ Hz @ fy @ dagx, zero, -bz @ Hx @ fy @ dagz],
+            [-bx @ Hy @ fz @ dagx, by @ Hx @ fz @ dagy, zero],
+        ]
+    )
 
 
 def poynting_chew_e_cross(efield: np.ndarray,

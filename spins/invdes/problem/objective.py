@@ -499,7 +499,7 @@ class ValueSlice(OptimizationFunction):
         return [grad_res]
 
     def __str__(self):
-        return "p[" + str(self._index) + "]"
+        return f"p[{str(self._index)}]"
 
 
 class Sum(OptimizationFunction):
@@ -521,8 +521,7 @@ class Sum(OptimizationFunction):
 
         if weights is not None:
             self.objectives = []
-            for i, obj in enumerate(objectives):
-                self.objectives.append(weights[i] * obj)
+            self.objectives.extend(weights[i] * obj for i, obj in enumerate(objectives))
         else:
             self.objectives = objectives
 
@@ -553,7 +552,7 @@ class Sum(OptimizationFunction):
     def __str__(self):
         string = "(" + " + ".join(str(obj) for obj in self.objectives) + ")"
         if self.parallelize:
-            string = "||" + string
+            string = f"||{string}"
         return string
 
 
@@ -610,7 +609,7 @@ class Product(OptimizationFunction):
         # is kept in one Product object.
         string = "({0})".format(" * ".join(str(obj) for obj in self.objectives))
         if self.parallelize:
-            string = "||" + string
+            string = f"||{string}"
         return string
 
 
@@ -637,7 +636,7 @@ class Power(OptimizationFunction):
         return [grad_val * self.power * input_vals[0]**(self.power - 1)]
 
     def __str__(self):
-        return str(self.obj) + "**" + str(self.power)
+        return f"{str(self.obj)}**{str(self.power)}"
 
 
 # TODO(logansu): Fix gradients here. The fundamental issue is that for
@@ -670,7 +669,7 @@ class AbsoluteValue(OptimizationFunction):
         return [grad_val * grad]
 
     def __str__(self):
-        return "abs({})".format(self._inputs[0])
+        return f"abs({self._inputs[0]})"
 
 
 class IndicatorPlus(OptimizationFunction):
@@ -821,9 +820,10 @@ class LogSumExp(OptimizationFunction):
              grad_val: np.ndarray) -> List[np.ndarray]:
         max_val = np.max(input_vals)
         denom = np.sum(np.exp(np.array(input_vals) - max_val))
-        grads = []
-        for i in range(len(self.objectives)):
-            grads.append(1 / denom * np.exp(input_vals[i] - max_val))
+        grads = [
+            1 / denom * np.exp(input_vals[i] - max_val)
+            for i in range(len(self.objectives))
+        ]
         return grad_val * np.array(grads)
 
     def __str__(self):

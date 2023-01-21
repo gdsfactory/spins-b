@@ -112,12 +112,11 @@ def load_all_logs(log_dir: str) -> Dict:
     Returns:
         List of the dictionaries contained in the optimization pickle files.
     """
-    # Create a list of all the log files in the log directory.
-    logs_name_list = []
-    for dir_file in os.listdir(log_dir):
-        if dir_file.endswith(LOG_EXTENSION):
-            logs_name_list.append(dir_file)
-
+    logs_name_list = [
+        dir_file
+        for dir_file in os.listdir(log_dir)
+        if dir_file.endswith(LOG_EXTENSION)
+    ]
     # Create a list of all the log dictionaries loaded from each log file.
     log_dict_list = []
     for file_name in logs_name_list:
@@ -289,12 +288,7 @@ def get_overlap_monitor_names(log_df: pd.DataFrame) -> List[str]:
         List of overlap monitor name strings.
     """
     monitor_names = get_monitor_name_by_type(log_df)
-    overlap_names = []
-    for name in monitor_names.scalars:
-        # Currently, all overlap monitors have an autogen name including "overlap".
-        if "overlap" in name.lower():
-            overlap_names.append(name)
-    return overlap_names
+    return [name for name in monitor_names.scalars if "overlap" in name.lower()]
 
 
 def get_joined_scalar_monitors(
@@ -361,8 +355,7 @@ def process_scalar(data: Union[float, List],
     elif scalar_operation.lower() == "imag":
         return np.imag(data)
     else:
-        raise ValueError(
-            "Unknown scalar operation, got {}".format(scalar_operation))
+        raise ValueError(f"Unknown scalar operation, got {scalar_operation}")
 
 
 def process_field(field: List,

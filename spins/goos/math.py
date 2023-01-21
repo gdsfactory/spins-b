@@ -24,7 +24,7 @@ class Function(goos.ProblemGraphNode):
             return Sum([self, Constant(obj)])
         if isinstance(obj, np.ndarray):
             return Sum([self, Constant(obj)])
-        raise TypeError("Attempting to add node with type {}".format(type(obj)))
+        raise TypeError(f"Attempting to add node with type {type(obj)}")
 
     def __mul__(self, obj) -> "Product":
         if isinstance(obj, Product):
@@ -37,8 +37,7 @@ class Function(goos.ProblemGraphNode):
             return Product([self, Constant(obj)])
         if isinstance(obj, np.ndarray):
             return Product([self, Constant(obj)])
-        raise TypeError("Attempting to multiply node with type {}".format(
-            type(obj)))
+        raise TypeError(f"Attempting to multiply node with type {type(obj)}")
 
     def __radd__(self, obj) -> "Sum":
         return self.__add__(obj)
@@ -64,8 +63,7 @@ class Function(goos.ProblemGraphNode):
     def __pow__(self, obj) -> "Power":
         if isinstance(obj, numbers.Number):
             return Power(self, obj)
-        raise TypeError("Attempting to exponenitate node with type {}".format(
-            type(obj)))
+        raise TypeError(f"Attempting to exponenitate node with type {type(obj)}")
 
 
 class Constant(Function):
@@ -127,7 +125,7 @@ class Variable(Function):
         return flows.NumericFlow(goos.get_default_plan().get_var_value(self))
 
     def set(self, value):
-        if isinstance(value, numbers.Number) or isinstance(value, np.ndarray):
+        if isinstance(value, (numbers.Number, np.ndarray)):
             value = Constant(value)
         goos.get_default_plan().add_action(SetVariable(self, value))
 
@@ -151,8 +149,8 @@ class SetVariable(goos.Action):
         if (not isinstance(value, numbers.Number) and
                 not isinstance(value, Function)):
             raise TypeError(
-                "`value` must be either numeric or a `goos.Function`,"
-                " got {}".format(value))
+                f"`value` must be either numeric or a `goos.Function`, got {value}"
+            )
 
     def run(self, plan: goos.OptimizationPlan) -> None:
         value = self._value
@@ -198,25 +196,18 @@ def find_dominant_numeric_flow(flow_list: List[goos.NumericFlow],
     for i, flow in enumerate(flow_list):
         if type(flow) == flows.NumericFlow:
             continue
-        if not dom_flow:
-            dom_flow = flow
-            ind = i
-        else:
+        if dom_flow:
             raise ValueError(
                 "Input arguments to sum must have at most one flow where"
                 " type is not `flows.NumericFlow`.")
 
+        dom_flow = flow
+        ind = i
     if not dom_flow:
         # Check whether all flows have same shape.
         flow_shapes = [np.shape(flow.array) for flow in flow_list]
 
-        # Check if all flows have same shape.
-        same_shape = True
-        for shape in flow_shapes:
-            if shape != flow_shapes[0]:
-                same_shape = False
-                break
-
+        same_shape = all(shape == flow_shapes[0] for shape in flow_shapes)
         if same_shape:
             dom_flow = flow_list[0]
             ind = 0
@@ -225,20 +216,16 @@ def find_dominant_numeric_flow(flow_list: List[goos.NumericFlow],
         # Check whether all flows but one is a scalar.
         for i, flow in enumerate(flow_list):
             if np.size(flow.array) > 1:
-                if not dom_flow:
-                    dom_flow = flow
-                    ind = i
-                else:
+                if dom_flow:
                     raise ValueError("Only one non-scalar is permitted.")
 
+                dom_flow = flow
+                ind = i
     if not dom_flow:
         dom_flow = flow_list[0]
         ind = 0
 
-    if return_ind:
-        return dom_flow, ind
-    else:
-        return dom_flow
+    return (dom_flow, ind) if return_ind else dom_flow
 
 
 class Sum(Function):
@@ -271,13 +258,11 @@ class Sum(Function):
             return Sum(self._fun + obj._fun)
         if isinstance(obj, Function):
             return Sum(self._fun + [obj])
-        if isinstance(obj, numbers.Number) or isinstance(obj, np.ndarray):
-            return Sum(self._fun + [Constant(obj)])
-        if isinstance(obj, np.ndarray):
+        if isinstance(obj, (numbers.Number, np.ndarray)):
             return Sum(self._fun + [Constant(obj)])
         raise TypeError(
-            "Attempting to add a node with type {} to type `Sum`.".format(
-                type(obj)))
+            f"Attempting to add a node with type {type(obj)} to type `Sum`."
+        )
 
 
 class Product(Function):
@@ -318,13 +303,11 @@ class Product(Function):
             return Product(self._fun + obj._fun)
         if isinstance(obj, Function):
             return Product(self._fun + [obj])
-        if isinstance(obj, numbers.Number) or isinstance(obj, np.ndarray):
-            return Product(self._fun + [Constant(obj)])
-        if isinstance(obj, np.ndarray):
+        if isinstance(obj, (numbers.Number, np.ndarray)):
             return Product(self._fun + [Constant(obj)])
         raise TypeError(
-            "Attempting to add a node with type {} to type `Sum`.".format(
-                type(obj)))
+            f"Attempting to add a node with type {type(obj)} to type `Sum`."
+        )
 
 
 class Power(Function):
@@ -553,7 +536,7 @@ class Slice(Function):
                 slices += [slice(self._slices[i], self._slices[i] + 1)]
             elif isinstance(self._slices[i], List):
                 slices += [slice(self._slices[i][0], self._slices[i][1])]
-            elif self._slices[i] == "c" or self._slices[i] == "center":
+            elif self._slices[i] in ["c", "center"]:
                 slices += [slice(dim // 2, dim // 2 + 1)]
             elif self._slices[i] is None:
                 slices += [slice(0, dim)]

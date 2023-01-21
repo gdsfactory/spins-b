@@ -99,13 +99,11 @@ def solve_waveguide_mode_2d(
         wavenumber = np.sin(np.real(wavenumber * dx / 2)) / (dx / 2) + np.imag(wavenumber)
 
     shape = [d.size for d in dxes[0]]
-    fields = {
+    return {
         'wavenumber': wavenumber,
         'E': unvec(e, shape),
         'H': unvec(h, shape),
     }
-
-    return fields
 
 
 def solve_waveguide_mode_3d(
@@ -349,13 +347,11 @@ def solve_waveguide_mode(
         H[a][tuple(slices)] = fields_2d['H'][o][:, :, None].transpose(
             reverse_order)
 
-    results = {
+    return {
         'wavenumber': fields_2d['wavenumber'],
         'H': H,
         'E': E,
     }
-
-    return results
 
 
 def compute_source(
@@ -392,8 +388,7 @@ def compute_source(
     M = [None] * 3
 
     src_order = np.roll(range(3), -axis)
-    exp_iphi = np.exp(
-        1j * polarity * wavenumber * dxes[1][int(axis)][slices[int(axis)]])
+    exp_iphi = np.exp(1j * polarity * wavenumber * dxes[1][axis][slices[axis]])
     J[src_order[0]] = np.zeros_like(E[0])
     J[src_order[1]] = +exp_iphi * H[src_order[2]] * polarity
     J[src_order[2]] = -exp_iphi * H[src_order[1]] * polarity
@@ -408,7 +403,7 @@ def compute_source(
     for k in range(3):
         J[k] += Jm_iw[k] / (-1j * omega)
 
-    return J / dxes[1][int(axis)][slices[int(axis)]]
+    return J / dxes[1][axis][slices[axis]]
 
 
 def compute_source_angle(
@@ -439,15 +434,15 @@ def compute_source_angle(
     :param mu: Magnetic permeability (default 1 everywhere)
     :return: J distribution for the unidirectional source
     """
-    if polarity == 1:
-        Mslice = copy.deepcopy(slices)
-        Jslice = copy.deepcopy(slices)
-        Jslice[axis] = slice(Jslice[axis].start + 1, Jslice[axis].stop + 1)
-    elif polarity == -1:
+    if polarity == -1:
         Mslice = copy.deepcopy(slices)
         Mslice[axis] = slice(Mslice[axis].start - 1, Mslice[axis].stop - 1)
         Jslice = copy.deepcopy(slices)
 
+    elif polarity == 1:
+        Mslice = copy.deepcopy(slices)
+        Jslice = copy.deepcopy(slices)
+        Jslice[axis] = slice(Jslice[axis].start + 1, Jslice[axis].stop + 1)
     if mu is None:
         mu = np.ones_like(eps)
 
@@ -530,7 +525,7 @@ def compute_overlap_e(
 
     npts = E[0].size
     dn = np.zeros(npts * 3, dtype=int)
-    dn[0:npts] = 1
+    dn[:npts] = 1
     dn = np.roll(dn, npts * axis)
 
     e2h = operators.e2h(omega, dxes, mu)
@@ -744,9 +739,7 @@ def build_waveguide_source(omega: complex, dxes: List[np.ndarray],
     for k in range(len(J)):
         J[k] *= np.sqrt(power)
 
-    if get_wavenumber:
-        return J, wgmode_result['wavenumber']
-    return J
+    return (J, wgmode_result['wavenumber']) if get_wavenumber else J
 
 
 def build_waveguide_source_angle(omega: complex,
@@ -960,7 +953,7 @@ def build_overlap(omega: complex, dxes: List[np.ndarray], eps: List[np.ndarray],
         axis = axis.value
 
     if np.abs(polarity) != 1:
-        raise ValueError("Polarity should be +/- 1, got {}".format(polarity))
+        raise ValueError(f"Polarity should be +/- 1, got {polarity}")
 
     sim_params = {
         'omega': omega,

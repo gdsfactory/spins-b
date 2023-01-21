@@ -74,12 +74,12 @@ def visualize_fields(
         plt.subplot(2, 3, i + 1)
         plt.imshow(np.real(fields[i][slicer].squeeze()))
         plt.colorbar()
-        plt.title("Re[E{}]".format(comp_name))
+        plt.title(f"Re[E{comp_name}]")
 
         plt.subplot(2, 3, i + 4)
         plt.imshow(np.imag(fields[i][slicer].squeeze()))
         plt.colorbar()
-        plt.title("Im[E{}]".format(comp_name))
+        plt.title(f"Im[E{comp_name}]")
     plt.show()
 
 

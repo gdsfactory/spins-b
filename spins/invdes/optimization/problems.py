@@ -198,10 +198,7 @@ def build_constrained_ellipsoidal_problem():
 
 def build_constrained_problem_list():
     # Construct a list of "standard" constrained problems.
-    prob = []
-    prob.append(build_constrained_ellipsoidal_problem())
-    for i in range(2):
-        prob.append(build_constrained_linear_problem(i))
-    for i in range(3):
-        prob.append(build_constrained_quadratic_problem(i))
+    prob = [build_constrained_ellipsoidal_problem()]
+    prob.extend(build_constrained_linear_problem(i) for i in range(2))
+    prob.extend(build_constrained_quadratic_problem(i) for i in range(3))
     return prob

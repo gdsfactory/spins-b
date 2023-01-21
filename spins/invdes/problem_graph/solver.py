@@ -116,8 +116,8 @@ def restore_workspace(plan: optplan.OptimizationPlan, work: workspace.Workspace,
     # `transform_index - 1` transformation.
     for i, transform in enumerate(plan.transformations):
         if os.path.exists(
-                os.path.join(save_folder,
-                             "{}.chkpt.pkl".format(transform.name))):
+            os.path.join(save_folder, f"{transform.name}.chkpt.pkl")
+        ):
             transform_index = i + 1
 
     # Load the checkpoint data.
@@ -127,9 +127,10 @@ def restore_workspace(plan: optplan.OptimizationPlan, work: workspace.Workspace,
     # parameters.
     if transform_index > 0:
         chkpt_file = os.path.join(
-            save_folder, "{}.chkpt.pkl".format(
-                plan.transformations[transform_index - 1].name))
-        console_logger.info("Restoring from checkpoint {}".format(chkpt_file))
+            save_folder,
+            f"{plan.transformations[transform_index - 1].name}.chkpt.pkl",
+        )
+        console_logger.info(f"Restoring from checkpoint {chkpt_file}")
         with open(chkpt_file, "rb") as fp:
             chkpt_data = pickle.load(fp)
 
@@ -165,7 +166,7 @@ def restore_workspace(plan: optplan.OptimizationPlan, work: workspace.Workspace,
     if not log_file:
         return transform_index, None
 
-    console_logger.info("Restoring from log {}".format(log_file))
+    console_logger.info(f"Restoring from log {log_file}")
     with open(log_file, "rb") as fp:
         log_data = pickle.load(fp)
 

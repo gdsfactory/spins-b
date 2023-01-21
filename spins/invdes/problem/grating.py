@@ -52,8 +52,7 @@ class GratingFeatureConstraint(problem.OptimizationFunction):
                 described above.
         """
         if min_feature < 0:
-            raise ValueError(
-                "Minimum feature must be positive, got {}".format(min_feature))
+            raise ValueError(f"Minimum feature must be positive, got {min_feature}")
         self._min_feature = min_feature
         self._edge_cons_scale = boundary_constraint_scale
 
@@ -78,14 +77,10 @@ class GratingFeatureConstraint(problem.OptimizationFunction):
         # parametrizations are currently handled as a single composite
         # parametrization.
         if isinstance(param, parametrization.CompositeParam):
-            # The gradient is block-diagonal, with one block per
-            # sub-parametrization.
-            grad_blocks = []
-
-            for subparam in param._params:
-                grad_blocks.append(
-                    self._build_constraint_grads(subparam.to_vector()))
-
+            grad_blocks = [
+                self._build_constraint_grads(subparam.to_vector())
+                for subparam in param._params
+            ]
             return scipy.linalg.block_diag(*grad_blocks)
 
         return self._build_constraint_grads(param.to_vector())
@@ -105,10 +100,12 @@ class GratingFeatureConstraint(problem.OptimizationFunction):
         Returns:
             List of constraints.
         """
-        constraints = []
-        # The minimum feature constraint.
-        constraints.append(-(_diff_matrix(len(vec)) @ vec -
-                             np.ones(len(vec) - 1) * self._min_feature))
+        constraints = [
+            -(
+                _diff_matrix(len(vec)) @ vec
+                - np.ones(len(vec) - 1) * self._min_feature
+            )
+        ]
         # Lower bounding the left and right edges. Note that we keep them at
         # least 2 times the minimum feature constraint because the selection
         # matrix at the edges may not be aligned to the grid.
@@ -128,10 +125,7 @@ class GratingFeatureConstraint(problem.OptimizationFunction):
         Returns:
             List of constraint gradients.
         """
-        constraints = []
-
-        # The minimum feature constraint.
-        constraints.append(-_diff_matrix(len(vec)))
+        constraints = [-_diff_matrix(len(vec))]
 
         lower_bound = np.zeros(len(vec))
         lower_bound[0] = -1

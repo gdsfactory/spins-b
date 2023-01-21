@@ -168,8 +168,7 @@ class ArrayFlowImpl(GeometryImpl):
     def eval(self, grid: gridlock.Grid, params: RenderParams):
         extra_grids = []
         for s in self._shapes:
-            extra_grid = s.eval(grid, params)
-            if extra_grid:
+            if extra_grid := s.eval(grid, params):
                 extra_grids.append(extra_grid)
         return extra_grids
 
@@ -183,8 +182,7 @@ def _create_geometry(shape: Union[goos.ArrayFlow, goos.Shape]) -> GeometryImpl:
         if isinstance(shape, flow_entry.schema):
             return flow_entry.creator(shape)
 
-    raise ValueError("Encountered unrenderable type, got {}.".format(
-        type(shape)))
+    raise ValueError(f"Encountered unrenderable type, got {type(shape)}.")
 
 
 def get_rendering_matrix(shape_edge_coords, grid_edge_coords):
@@ -225,5 +223,3 @@ def get_rendering_matrix_1d(shape_coord, grid_coord):
         shape=(len(grid_coord) - 1, len(shape_coord) - 1))
 
 
-if __name__ == "__main__":
-    pass

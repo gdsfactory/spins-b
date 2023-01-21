@@ -57,9 +57,9 @@ class GratingParam(parametrization.Parametrization):
         """
         # Validate that the number of edges are correct.
         if len(initial_value) % 2 == 1:
-            raise ValueError("The number of edges in the grating expected to "
-                             "be even, got {} instead.".format(
-                                 len(initial_value)))
+            raise ValueError(
+                f"The number of edges in the grating expected to be even, got {len(initial_value)} instead."
+            )
 
         # `self._edges` holds the state of the parametrization. The edges are
         # stored in ascending order.
@@ -85,8 +85,8 @@ class GratingParam(parametrization.Parametrization):
         """
         # Compute the widths and the centers of the grating teeth i.e. regions
         # which have a value of 1.
-        widths = self._edges[1::2] - self._edges[0::2]
-        centers = 0.5 * (self._edges[1::2] + self._edges[0::2])
+        widths = self._edges[1::2] - self._edges[::2]
+        centers = 0.5 * (self._edges[1::2] + self._edges[::2])
 
         # Initialize the pixels in the structure to 0.
         pixel_vals = np.zeros(self._num_pixels)
@@ -97,9 +97,7 @@ class GratingParam(parametrization.Parametrization):
                 np.array([center - 0.5 * width, center + 0.5 * width]),
                 self._x_coords)
 
-        if self._inverted:
-            return 1 - pixel_vals
-        return pixel_vals
+        return 1 - pixel_vals if self._inverted else pixel_vals
 
     def calculate_gradient(self) -> linalg.LinearOperator:
         """Compute the gradient of the structure `z` with respect to edges.
@@ -201,7 +199,4 @@ class GratingParam(parametrization.Parametrization):
     def deserialize(self, data: Dict) -> None:
         super().deserialize(data)
 
-        if "inverted" in data:
-            self._inverted = data["inverted"]
-        else:
-            self._inverted = False
+        self._inverted = data["inverted"] if "inverted" in data else False

@@ -64,29 +64,27 @@ class FabricationConstraint(OptimizationFunction):
         if self.method == 1:
             return self.weight_factor * param.calculate_gap_penalty(
                 np.pi / (1.20 * self.d))
-        if self.method == 2:
-            curv = self.weight_factor * param.calculate_curv_penalty(
-                np.pi / (1.15 * self.d))
-            gap = self.weight_factor * param.calculate_gap_penalty(
-                np.pi / (1.20 * self.d))
-            return curv + gap
-        else:
+        if self.method != 2:
             return self.weight_factor * param.calculate_gap_penalty(
                 np.pi / (1.20 * self.d))
+        curv = self.weight_factor * param.calculate_curv_penalty(
+            np.pi / (1.15 * self.d))
+        gap = self.weight_factor * param.calculate_gap_penalty(
+            np.pi / (1.20 * self.d))
+        return curv + gap
 
     def calculate_gradient(self, param):
         if self.method == 1:
             return self.weight_factor * param.calculate_gap_penalty_gradient(
                 np.pi / (1.20 * self.d))
-        if self.method == 2:
-            curv = self.weight_factor * param.calculate_curv_penalty_gradient(
-                np.pi / (1.15 * self.d))
-            gap = self.weight_factor * param.calculate_gap_penalty_gradient(
-                np.pi / (1.20 * self.d))
-            return curv + gap
-        else:
+        if self.method != 2:
             return self.weight_factor * param.calculate_gap_penalty_gradient(
                 np.pi / (1.20 * self.d))
+        curv = self.weight_factor * param.calculate_curv_penalty_gradient(
+            np.pi / (1.15 * self.d))
+        gap = self.weight_factor * param.calculate_gap_penalty_gradient(
+            np.pi / (1.20 * self.d))
+        return curv + gap
 
     def __str__(self):
-        return 'FabCon(' + str(self.d) + ')'
+        return f'FabCon({str(self.d)})'

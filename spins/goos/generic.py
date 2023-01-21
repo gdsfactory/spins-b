@@ -129,14 +129,10 @@ class LogPrint(goos.Action):
             plan.logger.info(self._obj)
             return
 
-        if isinstance(self._obj, goos.Function):
-            nodes = [self._obj]
-        else:
-            nodes = self._obj
-
+        nodes = [self._obj] if isinstance(self._obj, goos.Function) else self._obj
         values = plan.eval_nodes(nodes)
         for node, val in zip(nodes, values):
-            plan.logger.info("{}: {}".format(node._goos_name, val))
+            plan.logger.info(f"{node._goos_name}: {val}")
 
 
 def log_print(*args, **kwargs) -> LogPrint:

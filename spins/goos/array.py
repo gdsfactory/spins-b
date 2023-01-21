@@ -24,7 +24,7 @@ class ArrayFlow(flows.Flow):
                 flow.set_all(value)
 
         def __bool__(self):
-            return all(flow for flow in self.flow_flags)
+            return all(self.flow_flags)
 
     @dataclasses.dataclass
     class Grad(flows.Flow.Grad):
@@ -91,7 +91,7 @@ class ArrayFlow(flows.Flow):
         return self._flows == value._flows
 
     def __repr__(self):
-        return "ArrayFlow({})".format(self._flows)
+        return f"ArrayFlow({self._flows})"
 
 
 class ArrayFlowOpMixin:
@@ -134,8 +134,7 @@ class ArrayFlowOpMixin:
             if not name:
                 continue
             if name in names:
-                raise ValueError(
-                    "Duplicate flow name found, got {}".format(name))
+                raise ValueError(f"Duplicate flow name found, got {name}")
             names.add(name)
 
         self._flow_names = flow_names
@@ -170,7 +169,7 @@ class ArrayFlowOpMixin:
             # We prepend now instead of the constructor because `_goos_name`
             # is not set until after object construction.
             if self._prepend_parent_name and flow_name:
-                flow_name = self._goos_name + "." + flow_name
+                flow_name = f"{self._goos_name}.{flow_name}"
             self._cast_objs[ind] = generic.cast(IndexOp(self, ind),
                                                 self._flow_types[ind],
                                                 name=flow_name)

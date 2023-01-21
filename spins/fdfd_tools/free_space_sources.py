@@ -18,23 +18,25 @@ PI = np.pi
 def rotation_matrix(vec: np.ndarray, angle: float) -> np.ndarray:
     """Matrix rotates around the vector.
     """
-    R = np.array([[
-        COS(angle) + vec[0]**2 * (1 - COS(angle)),
-        vec[0] * vec[1] * (1 - COS(angle)) - vec[2] * SIN(angle),
-        vec[0] * vec[2] * (1 - COS(angle)) + vec[1] * SIN(angle)
-    ],
-                  [
-                      vec[0] * vec[1] * (1 - COS(angle)) + vec[2] * SIN(angle),
-                      COS(angle) + vec[1]**2 * (1 - COS(angle)),
-                      vec[1] * vec[2] * (1 - COS(angle)) - vec[0] * SIN(angle)
-                  ],
-                  [
-                      vec[0] * vec[2] * (1 - COS(angle)) - vec[1] * SIN(angle),
-                      vec[1] * vec[2] * (1 - COS(angle)) + vec[0] * SIN(angle),
-                      COS(angle) + vec[2]**2 * (1 - COS(angle))
-                  ]])
-
-    return R
+    return np.array(
+        [
+            [
+                COS(angle) + vec[0] ** 2 * (1 - COS(angle)),
+                vec[0] * vec[1] * (1 - COS(angle)) - vec[2] * SIN(angle),
+                vec[0] * vec[2] * (1 - COS(angle)) + vec[1] * SIN(angle),
+            ],
+            [
+                vec[0] * vec[1] * (1 - COS(angle)) + vec[2] * SIN(angle),
+                COS(angle) + vec[1] ** 2 * (1 - COS(angle)),
+                vec[1] * vec[2] * (1 - COS(angle)) - vec[0] * SIN(angle),
+            ],
+            [
+                vec[0] * vec[2] * (1 - COS(angle)) - vec[1] * SIN(angle),
+                vec[1] * vec[2] * (1 - COS(angle)) + vec[0] * SIN(angle),
+                COS(angle) + vec[2] ** 2 * (1 - COS(angle)),
+            ],
+        ]
+    )
 
 
 def gaussian_beam_z_axis_x_pol(x_grid, y_grid, z_grid, w0, center, R, omega,
@@ -184,20 +186,20 @@ def scalar2rotated_vector_fields(eps_grid: Grid,
             E[a] = np.sqrt(power) * E_fields[o].transpose(reverse_order)
             H[a] = np.sqrt(power) * H_fields[o].transpose(reverse_order)
         else:
-            E[a][tuple(slices)] = np.sqrt(power) * E_fields[o][tuple(
-                [slices[i] for i in order])].transpose(reverse_order)
-            H[a][tuple(slices)] = np.sqrt(power) * H_fields[o][tuple(
-                [slices[i] for i in order])].transpose(reverse_order)
+            E[a][tuple(slices)] = np.sqrt(power) * E_fields[o][
+                tuple(slices[i] for i in order)
+            ].transpose(reverse_order)
+            H[a][tuple(slices)] = np.sqrt(power) * H_fields[o][
+                tuple(slices[i] for i in order)
+            ].transpose(reverse_order)
 
         wavevector[a] = bloch_vector[o]
 
-    results = {
+    return {
         'wavevector': wavevector,
         'H': H,
         'E': E,
     }
-
-    return results
 
 
 def build_plane_wave_source(eps_grid: Grid,
@@ -427,11 +429,10 @@ def build_gaussian_source(eps_grid: Grid,
     if polarity == -1:
         ind = slices[axis].start
         field_slices[axis] = slice(None, ind)
-        J_slices[axis] = slice(ind - 1, ind + 1)
     else:
         ind = slices[axis].stop - 1
         field_slices[axis] = slice(ind, None)
-        J_slices[axis] = slice(ind - 1, ind + 1)
+    J_slices[axis] = slice(ind - 1, ind + 1)
     E = np.zeros_like(fields['E'])
     for i in range(3):
         E[i][tuple(field_slices)] = fields['E'][i][tuple(field_slices)]

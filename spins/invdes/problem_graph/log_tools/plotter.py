@@ -72,11 +72,7 @@ def plot_scalar_monitors(
             log_df, monitor_description.monitor_names, event_name, scalar_op)
 
         # Choose axis object to plot on.
-        if same_plt:
-            axs = axes_list[0]
-        else:
-            axs = axes_list[plot_num]
-
+        axs = axes_list[0] if same_plt else axes_list[plot_num]
         axs.plot(
             plot_data.iterations,
             plot_data.data,
@@ -85,14 +81,13 @@ def plot_scalar_monitors(
             axs.axvline(x=change, color="k", linestyle="--")
         if same_plt:
             axs.legend()
+        elif plot_data.data.size:
+            axs.set_title("{name}:\nFinal value: {value:1.4E}".format(
+                name=monitor_description.joiner_id,
+                value=plot_data.data[-1]))
         else:
-            if not plot_data.data.size:
-                axs.set_title("{name}:\nNo iteration data found.".format(
-                    name=monitor_description.joiner_id))
-            else:
-                axs.set_title("{name}:\nFinal value: {value:1.4E}".format(
-                    name=monitor_description.joiner_id,
-                    value=plot_data.data[-1]))
+            axs.set_title("{name}:\nNo iteration data found.".format(
+                name=monitor_description.joiner_id))
         axs.set_xlabel("Iteration")
 
     # Save generated figures to multipage pdf object.
@@ -154,13 +149,13 @@ def plot_field_data(
 
         # Get the magnitude data.
         monitor_description = monitor_description_list.monitor_list[plt_ind]
-        field_dat = loader.get_single_monitor_data(
+        if field_dat := loader.get_single_monitor_data(
             log_df,
             monitor_description.monitor_names,
             transformation_name=transformation_name,
             iteration=iteration,
-            event_name=event_name)
-        if field_dat:
+            event_name=event_name,
+        ):
             field = loader.process_field(
                 field_dat,
                 vector_operation=monitor_description.vector_operation,
@@ -170,8 +165,8 @@ def plot_field_data(
             # Make sure field is plottable as an image.
             if len(field.shape) != 2:
                 raise ValueError(
-                    "Plotted field data must be 2D, but {} has dimensions {}".
-                    format(monitor_description.joiner_id, len(field.shape)))
+                    f"Plotted field data must be 2D, but {monitor_description.joiner_id} has dimensions {len(field.shape)}"
+                )
 
             im_plt = axs.imshow(field, origin="lower")
             axs.set_title(monitor_description.joiner_id)
@@ -210,16 +205,14 @@ def _create_figs(num_plts: int, num_rows: int = 1, num_cols: int = 1) -> List:
     """
 
     num_figs = math.ceil(num_plts / (num_rows * num_cols))
-    extras = num_plts % (num_rows * num_cols)
     figs_list = []
-    for fig_ind in range(num_figs):
+    for _ in range(num_figs):
         fig, _ = plt.subplots(
             num_rows, num_cols, figsize=(10, 6), tight_layout=True)
         figs_list.append(fig)
 
-    # Remove extra axes if necessary.
-    if extras:
-        for extras_ind in range((num_rows * num_cols) - extras):
+    if extras := num_plts % (num_rows * num_cols):
+        for _ in range((num_rows * num_cols) - extras):
             figs_list[-1].delaxes(figs_list[-1].axes[-1])
 
     return figs_list
